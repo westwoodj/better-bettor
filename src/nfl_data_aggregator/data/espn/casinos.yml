@@ -1,0 +1,85 @@
+Casinos:
+  - name: Betradar
+    active: true
+    id: 37
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/37?lang=en&region=us
+  - name: Caesars Sportsbook
+    active: true
+    id: 31
+    college_props: false
+    footballRef: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/31?lang=en&region=us
+  - name: MGM
+    active: true
+    id: 47
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/47?lang=en&region=us
+  - name: PointsBet
+    active: true
+    id: 48
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/48?lang=en&region=us
+  - name: ESPN BET
+    active: true
+    id: 58
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/58?lang=en&region=us
+  - name: ESPN Bet - Live Odds
+    active: true
+    id: 59
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/59?lang=en&region=us
+  - name: FanDuel
+    active: true
+    id: 1005
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/1005?lang=en&region=us
+  - name: Wynn
+    active: true
+    id: 33
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/33?lang=en&region=us
+  - name: Unibet
+    active: true
+    id: 36
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/36?lang=en&region=us
+  - name: DraftKings
+    active: true
+    id: 40
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/40?lang=en&region=us
+  - name: Caesars (New Jersey) - Live Odds
+    active: true
+    id: 44
+    college_props: true
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/44?lang=en&region=us
+  - name: Caesars Sportsbook (New Jersey)
+    active: true
+    id: 45
+    college_props: true
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/45?lang=en&region=us
+  - name: Caesars Sportsbook (New Jersey) - Live Odds
+    active: true
+    id: 46
+    college_props: true
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/46?lang=en&region=us
+  - name: Caesars Sportsbook (Colorado)
+    active: true
+    id: 52
+    college_props: true
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/52?lang=en&region=us
+  - name: Rushbet - Live Odds
+    active: true
+    id: 54
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/54?lang=en&region=us
+  - name: Holland Casino - Live Odds
+    active: true
+    id: 56
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/56?lang=en&region=us
+  - name: Bet365
+    active: true
+    id: 1001
+    college_props: false
+    ref: http://sports.core.api.espn.com/v2/sports/{sport}/leagues/{league}/casinos/1001?lang=en&region=us

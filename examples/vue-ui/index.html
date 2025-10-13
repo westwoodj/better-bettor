@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NFL Game Analysis — Demo UI</title>
+  <style>
+    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding: 24px; background:#f7f7fb; color:#111827 }
+    .app { max-width:900px; margin:0 auto; background:white; padding:20px; border-radius:8px; box-shadow:0 6px 18px rgba(16,24,40,0.06) }
+    h1 { font-size:20px; margin-bottom:6px }
+    .row { display:flex; gap:16px; align-items:flex-start; padding: 16px; column-gap: 16px;}
+    .col { flex:1 }
+    label { display:block; font-size:13px; margin-bottom:8px; color:#374151 }
+    .control { position:relative }
+    input.search { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:6px; background:white }
+    .suggestions { position:absolute; z-index:80; left:0; right:0; background:white; border:1px solid #e5e7eb; border-top:0; max-height:220px; overflow:clip; border-bottom-left-radius:6px; border-bottom-right-radius:6px }
+    .suggestion { padding:8px 10px; display:flex; gap:10px; align-items:center; cursor:pointer }
+    .suggestion:hover { background:#f3f4f6 }
+    .logo { width:28px; height:28px; object-fit:contain }
+    .teams { display:flex; gap:12px; align-items:center }
+    .bet-types { display:flex; gap:8px; flex-wrap:wrap }
+    .bet-types label { display:flex; gap:6px; align-items:center; padding:6px 10px; border-radius:6px; background:#f8fafc; border:1px solid #e6eef8; cursor:pointer }
+    button.primary { margin-top:12px; padding:10px 14px; background:#2563eb; color:white; border-radius:8px; border:0; cursor:pointer }
+    .result { margin-top:16px; padding:12px; background:#f8fafc; border-radius:8px }
+    .note { font-size:13px; color:#6b7280 }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <h1>NFL Game Analysis — Demo</h1>
+    <p class="note">Select two teams (type to filter), choose bet types, then click "Run analysis". Uses <code>all-teams.json</code> for team names and logos.</p>
+
+    <div class="row">
+      <div class="col">
+        <label for="home-input">Home Team</label>
+        <div class="control">
+          <input id="home-input" type="text" v-model="searchHome" @input="showHomeSuggestions=true" @focus="showHomeSuggestions=true" @blur="onHomeBlur" placeholder="Type team name or city" class="search" aria-label="Home team" />
+          <div v-if="showHomeSuggestions && filteredHome.length" class="suggestions">
+            <div class="suggestion" v-for="t in filteredHome" :key="t.id" @mousedown.prevent="selectHome(t)">
+              <img :src="t.href" alt="logo" class="logo" v-if="t.href"/>
+              <div>
+                <div style="font-weight:600">{{ t.displayName }}</div>
+                <div style="font-size:12px;color:#6b7280">{{ t.abbreviation }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <div v-if="selectedHome" class="teams">
+            <img :src="selectedHome.href" alt="logo" class="logo" v-if="selectedHome.href"/>
+            <div>
+              <div><strong>{{ selectedHome.displayName }}</strong></div>
+              <div class="note">{{ selectedHome.abbreviation }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <label for="away-input">Away Team</label>
+        <div class="control">
+          <input id="away-input" type="text" v-model="searchAway" @input="showAwaySuggestions=true" @focus="showAwaySuggestions=true" @blur="onAwayBlur" placeholder="Type team name or city" class="search" aria-label="Away team" />
+          <div v-if="showAwaySuggestions && filteredAway.length" class="suggestions">
+            <div class="suggestion" v-for="t in filteredAway" :key="t.id" @mousedown.prevent="selectAway(t)">
+              <img :src="t.href" alt="logo" class="logo" v-if="t.href"/>
+              <div>
+                <div style="font-weight:600">{{ t.displayName }}</div>
+                <div style="font-size:12px;color:#6b7280">{{ t.abbreviation }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <div v-if="selectedAway" class="teams">
+            <img :src="selectedAway.href" alt="logo" class="logo" v-if="selectedAway.href"/>
+            <div>
+              <div><strong>{{ selectedAway.displayName }}</strong></div>
+              <div class="note">{{ selectedAway.abbreviation }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px">
+      <label>Bet type filters</label>
+      <div class="bet-types">
+        <label v-for="bt in betTypes" :key="bt.value">
+          <input type="checkbox" v-model="selectedBetTypes" :value="bt.value" />
+          <span>{{ bt.label }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label for="endpoint-input">Test endpoint (POST)</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="endpoint-input" type="text" v-model="endpointUrl" class="search" style="flex:1" />
+        <label style="display:inline-flex;align-items:center;gap:6px;margin-left:6px"><input type="checkbox" v-model="sendToEndpoint" /> Send</label>
+      </div>
+      <div class="note" style="margin-top:6px">Default demo endpoint is <code>https://httpbin.org/post</code>. Toggle "Send" to POST the payload and display the response below.</div>
+    </div>
+
+    <div v-if="requestPayload" class="result" style="margin-top:12px">
+      <h3>Outgoing request</h3>
+      <pre style="white-space:pre-wrap;word-break:break-word">{{ prettyRequest }}</pre>
+      <h3 v-if="serverResponse">Server response</h3>
+      <pre v-if="serverResponse" style="white-space:pre-wrap;word-break:break-word">{{ prettyResponse }}</pre>
+      <div v-if="serverError" style="color:#b91c1c">{{ serverError }}</div>
+    </div>
+
+    <div>
+      <button class="primary" @click="runAnalysis">Run analysis</button>
+    </div>
+
+    <div class="result" v-if="analysisResult">
+      <h3>Analysis input</h3>
+      <div v-if="analysisResult.error" style="color:#b91c1c">{{ analysisResult.error }}</div>
+      <div v-else>
+        <p><strong>Home:</strong> {{ analysisResult.home.displayName }} ({{ analysisResult.home.abbreviation }})</p>
+        <p><strong>Away:</strong> {{ analysisResult.away.displayName }} ({{ analysisResult.away.abbreviation }})</p>
+        <p><strong>Bet types:</strong> <span v-if="analysisResult.betTypes.length">{{ analysisResult.betTypes.join(', ') }}</span><span v-else> (none)</span></p>
+        <p class="note">This demo UI only prepares the payload. Integrate with your backend or run local analysis logic where needed.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:12px" class="note">If the team logos don't load, ensure you are serving this project through a local web server (see README).</div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

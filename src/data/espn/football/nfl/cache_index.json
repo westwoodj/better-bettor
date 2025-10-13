@@ -1,0 +1,374 @@
+{
+  "athlete-11122": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\11122-2025.json",
+    "type": "athlete",
+    "athlete_id": "11122",
+    "timestamp": 1760396280
+  },
+  "athlete-16910": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\16910-2025.json",
+    "type": "athlete",
+    "athlete_id": "16910",
+    "timestamp": 1760396280
+  },
+  "athlete-2976549": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\2976549-2025.json",
+    "type": "athlete",
+    "athlete_id": "2976549",
+    "timestamp": 1760396280
+  },
+  "athlete-2978313": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\2978313-2025.json",
+    "type": "athlete",
+    "athlete_id": "2978313",
+    "timestamp": 1760396280
+  },
+  "athlete-3039707": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3039707-2025.json",
+    "type": "athlete",
+    "athlete_id": "3039707",
+    "timestamp": 1760396280
+  },
+  "athlete-3042717": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3042717-2025.json",
+    "type": "athlete",
+    "athlete_id": "3042717",
+    "timestamp": 1760396280
+  },
+  "athlete-3046287": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3046287-2025.json",
+    "type": "athlete",
+    "athlete_id": "3046287",
+    "timestamp": 1760396280
+  },
+  "athlete-3050122": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3050122-2025.json",
+    "type": "athlete",
+    "athlete_id": "3050122",
+    "timestamp": 1760396280
+  },
+  "athlete-3051324": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3051324-2025.json",
+    "type": "athlete",
+    "athlete_id": "3051324",
+    "timestamp": 1760396280
+  },
+  "athlete-3051389": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3051389-2025.json",
+    "type": "athlete",
+    "athlete_id": "3051389",
+    "timestamp": 1760396280
+  },
+  "athlete-3051397": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3051397-2025.json",
+    "type": "athlete",
+    "athlete_id": "3051397",
+    "timestamp": 1760396280
+  },
+  "athlete-3121003": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3121003-2025.json",
+    "type": "athlete",
+    "athlete_id": "3121003",
+    "timestamp": 1760396280
+  },
+  "athlete-3121427": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3121427-2025.json",
+    "type": "athlete",
+    "athlete_id": "3121427",
+    "timestamp": 1760396280
+  },
+  "athlete-3915411": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3915411-2025.json",
+    "type": "athlete",
+    "athlete_id": "3915411",
+    "timestamp": 1760396280
+  },
+  "athlete-3916577": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3916577-2025.json",
+    "type": "athlete",
+    "athlete_id": "3916577",
+    "timestamp": 1760396280
+  },
+  "athlete-3917232": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3917232-2025.json",
+    "type": "athlete",
+    "athlete_id": "3917232",
+    "timestamp": 1760396280
+  },
+  "athlete-3917660": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3917660-2025.json",
+    "type": "athlete",
+    "athlete_id": "3917660",
+    "timestamp": 1760396280
+  },
+  "athlete-3918298": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3918298-2025.json",
+    "type": "athlete",
+    "athlete_id": "3918298",
+    "timestamp": 1760396280
+  },
+  "athlete-3930086": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\3930086-2025.json",
+    "type": "athlete",
+    "athlete_id": "3930086",
+    "timestamp": 1760396280
+  },
+  "athlete-4030899": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4030899-2025.json",
+    "type": "athlete",
+    "athlete_id": "4030899",
+    "timestamp": 1760396280
+  },
+  "athlete-4033234": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4033234-2025.json",
+    "type": "athlete",
+    "athlete_id": "4033234",
+    "timestamp": 1760396280
+  },
+  "athlete-4033748": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4033748-2025.json",
+    "type": "athlete",
+    "athlete_id": "4033748",
+    "timestamp": 1760396280
+  },
+  "athlete-4035685": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4035685-2025.json",
+    "type": "athlete",
+    "athlete_id": "4035685",
+    "timestamp": 1760396280
+  },
+  "athlete-4036060": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4036060-2025.json",
+    "type": "athlete",
+    "athlete_id": "4036060",
+    "timestamp": 1760396280
+  },
+  "athlete-4039007": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4039007-2025.json",
+    "type": "athlete",
+    "athlete_id": "4039007",
+    "timestamp": 1760396280
+  },
+  "athlete-4039303": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4039303-2025.json",
+    "type": "athlete",
+    "athlete_id": "4039303",
+    "timestamp": 1760396280
+  },
+  "athlete-4039505": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4039505-2025.json",
+    "type": "athlete",
+    "athlete_id": "4039505",
+    "timestamp": 1760396280
+  },
+  "athlete-4044133": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4044133-2025.json",
+    "type": "athlete",
+    "athlete_id": "4044133",
+    "timestamp": 1760396280
+  },
+  "athlete-4239140": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4239140-2025.json",
+    "type": "athlete",
+    "athlete_id": "4239140",
+    "timestamp": 1760396280
+  },
+  "athlete-4240059": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4240059-2025.json",
+    "type": "athlete",
+    "athlete_id": "4240059",
+    "timestamp": 1760396280
+  },
+  "athlete-4240585": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4240585-2025.json",
+    "type": "athlete",
+    "athlete_id": "4240585",
+    "timestamp": 1760396280
+  },
+  "athlete-4241476": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4241476-2025.json",
+    "type": "athlete",
+    "athlete_id": "4241476",
+    "timestamp": 1760396280
+  },
+  "athlete-4242433": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4242433-2025.json",
+    "type": "athlete",
+    "athlete_id": "4242433",
+    "timestamp": 1760396280
+  },
+  "athlete-4259166": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4259166-2025.json",
+    "type": "athlete",
+    "athlete_id": "4259166",
+    "timestamp": 1760396280
+  },
+  "athlete-4362506": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4362506-2025.json",
+    "type": "athlete",
+    "athlete_id": "4362506",
+    "timestamp": 1760396280
+  },
+  "athlete-4366349": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4366349-2025.json",
+    "type": "athlete",
+    "athlete_id": "4366349",
+    "timestamp": 1760396280
+  },
+  "athlete-4367203": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4367203-2025.json",
+    "type": "athlete",
+    "athlete_id": "4367203",
+    "timestamp": 1760396280
+  },
+  "athlete-4368828": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4368828-2025.json",
+    "type": "athlete",
+    "athlete_id": "4368828",
+    "timestamp": 1760396280
+  },
+  "athlete-4372414": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4372414-2025.json",
+    "type": "athlete",
+    "athlete_id": "4372414",
+    "timestamp": 1760396280
+  },
+  "athlete-4373678": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4373678-2025.json",
+    "type": "athlete",
+    "athlete_id": "4373678",
+    "timestamp": 1760396280
+  },
+  "athlete-4379399": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4379399-2025.json",
+    "type": "athlete",
+    "athlete_id": "4379399",
+    "timestamp": 1760396280
+  },
+  "athlete-4379778": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4379778-2025.json",
+    "type": "athlete",
+    "athlete_id": "4379778",
+    "timestamp": 1760396280
+  },
+  "athlete-4385690": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4385690-2025.json",
+    "type": "athlete",
+    "athlete_id": "4385690",
+    "timestamp": 1760396280
+  },
+  "athlete-4426883": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4426883-2025.json",
+    "type": "athlete",
+    "athlete_id": "4426883",
+    "timestamp": 1760396280
+  },
+  "athlete-4427843": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4427843-2025.json",
+    "type": "athlete",
+    "athlete_id": "4427843",
+    "timestamp": 1760396280
+  },
+  "athlete-4428548": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4428548-2025.json",
+    "type": "athlete",
+    "athlete_id": "4428548",
+    "timestamp": 1760396280
+  },
+  "athlete-4428696": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4428696-2025.json",
+    "type": "athlete",
+    "athlete_id": "4428696",
+    "timestamp": 1760396280
+  },
+  "athlete-4429501": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4429501-2025.json",
+    "type": "athlete",
+    "athlete_id": "4429501",
+    "timestamp": 1760396280
+  },
+  "athlete-4430815": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4430815-2025.json",
+    "type": "athlete",
+    "athlete_id": "4430815",
+    "timestamp": 1760396280
+  },
+  "athlete-4432715": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4432715-2025.json",
+    "type": "athlete",
+    "athlete_id": "4432715",
+    "timestamp": 1760396280
+  },
+  "athlete-4568624": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4568624-2025.json",
+    "type": "athlete",
+    "athlete_id": "4568624",
+    "timestamp": 1760396280
+  },
+  "athlete-4568703": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4568703-2025.json",
+    "type": "athlete",
+    "athlete_id": "4568703",
+    "timestamp": 1760396280
+  },
+  "athlete-4573684": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4573684-2025.json",
+    "type": "athlete",
+    "athlete_id": "4573684",
+    "timestamp": 1760396280
+  },
+  "athlete-4573699": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4573699-2025.json",
+    "type": "athlete",
+    "athlete_id": "4573699",
+    "timestamp": 1760396280
+  },
+  "athlete-4576069": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4576069-2025.json",
+    "type": "athlete",
+    "athlete_id": "4576069",
+    "timestamp": 1760396280
+  },
+  "athlete-4596480": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4596480-2025.json",
+    "type": "athlete",
+    "athlete_id": "4596480",
+    "timestamp": 1760396280
+  },
+  "athlete-4635008": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4635008-2025.json",
+    "type": "athlete",
+    "athlete_id": "4635008",
+    "timestamp": 1760396280
+  },
+  "athlete-4676004": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4676004-2025.json",
+    "type": "athlete",
+    "athlete_id": "4676004",
+    "timestamp": 1760396280
+  },
+  "athlete-4684527": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4684527-2025.json",
+    "type": "athlete",
+    "athlete_id": "4684527",
+    "timestamp": 1760396280
+  },
+  "athlete-4688931": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4688931-2025.json",
+    "type": "athlete",
+    "athlete_id": "4688931",
+    "timestamp": 1760396280
+  },
+  "athlete-4689804": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4689804-2025.json",
+    "type": "athlete",
+    "athlete_id": "4689804",
+    "timestamp": 1760396280
+  },
+  "athlete-4831989": {
+    "path": "C:\\Users\\minim\\PycharmProjects\\nfl-data-aggregator\\src\\data\\espn\\football\\nfl\\athletes\\4831989-2025.json",
+    "type": "athlete",
+    "athlete_id": "4831989",
+    "timestamp": 1760396280
+  }
+}

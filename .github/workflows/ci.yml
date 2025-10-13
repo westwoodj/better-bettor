@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # To skip ruff in local runs or special CI runs set the repo secret SKIP_RUFF to 'true'
+      SKIP_RUFF: ${{ secrets.SKIP_RUFF }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.14'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.cache/pip/wheels
+          key: v1-pip-cache-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
+          restore-keys: v1-pip-cache-${{ runner.os }}-
+
+      - name: Cache pipenv virtualenvs and cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.local/share/virtualenvs
+            ~/.cache/pipenv
+          key: v1-pipenv-cache-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
+          restore-keys: v1-pipenv-cache-${{ runner.os }}-
+
+      - name: Install pipenv and upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+          pip install pipenv
+
+      - name: Install dependencies from Pipfile.lock (deterministic)
+        run: |
+          # Will fail if Pipfile.lock is out of date or dependency resolution differs
+          pipenv install --deploy --system
+
+      - name: Install test/dev tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests ruff coverage codecov
+
+      - name: Lint with ruff
+        if: env.SKIP_RUFF != 'true'
+        run: |
+          # Fail CI on lint errors
+          ruff check .
+
+      - name: Run tests under coverage and produce xml
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          coverage run -m pytest -q
+          coverage xml -i
+
+      - name: Upload coverage to Codecov
+        if: secrets.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Run plain pytest (sanity)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -q
