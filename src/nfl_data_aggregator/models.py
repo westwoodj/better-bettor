@@ -187,3 +187,39 @@ class Athlete:
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), ensure_ascii=False)
+
+
+# --- Phase 1 prediction response models ---
+
+class StatPrediction(BaseModel):
+    """Predicted stat with floor/expected/ceiling range."""
+    stat_name: str
+    floor: Optional[float] = None
+    expected: Optional[float] = None
+    ceiling: Optional[float] = None
+
+
+class PropComparisonItem(BaseModel):
+    """Comparison of a prediction against a prop line."""
+    market: str
+    line: float
+    predicted: float
+    edge: float
+    recommendation: str  # "over" or "under"
+    sportsbook: Optional[str] = None
+
+
+class PlayerPredictionResponse(BaseModel):
+    """Full prediction response for a player."""
+    player_id: str
+    player_name: Optional[str] = None
+    game_id: str
+    predicted_stats: Optional[List[StatPrediction]] = []
+    confidence_score: float = 0.0
+    confidence_grade: Optional[str] = None
+    trend_analysis: Optional[str] = None
+    matchup_assessment: Optional[str] = None
+    key_factors: Optional[str] = None
+    risk_factors: Optional[str] = None
+    prop_comparisons: Optional[List[PropComparisonItem]] = []
+    data_snapshot_hash: Optional[str] = None

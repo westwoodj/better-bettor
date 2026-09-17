@@ -45,8 +45,10 @@ class ESPNClient:
 
             self._requests = requests
             self._session = requests.Session()
-            # sensible default headers
-            self._session.headers.update({"Accept": "application/json", "User-Agent": "nfl-data-aggregator/0.1"})
+            # ESPN's edge may return 403 for explicit User-Agent headers. Keep
+            # the JSON preference, but remove requests' default User-Agent.
+            self._session.headers.update({"Accept": "application/json"})
+            self._session.headers.pop("User-Agent", None)
             # flag indicating whether the last GET was served from network
             self._last_response_from_network = False
         except Exception:  # pragma: no cover - requests not installed in some environments
@@ -173,7 +175,6 @@ class ESPNClient:
         Strategy:
         - If data/espn/{sport}/{league}/{last_segment}.json exists, return it.
         - Otherwise search for any JSON file in the directory that contains the last segment.
-        - Otherwise return the first JSON file in the directory (useful for small sample datasets).
         - Returns None if no candidate found.
         """
         if not sport or not league:
@@ -191,8 +192,7 @@ class ESPNClient:
             if last in f.stem:
                 return f
 
-        files = sorted(base.glob("*.json"))
-        return files[0] if files else None
+        return None
 
     def get(self, path: str, params: Optional[Dict[str, Any]] = None, *, sport: Optional[str] = None, league: Optional[str] = None, force: bool = False, timeout: Optional[float] = None) -> Any:
         """GET JSON from ESPN API or from local cache.
@@ -286,6 +286,12 @@ class NFLClient(ESPNClient):
     def roster(self, team_id: str, force: bool = False) -> Any:
         path = f"/apis/site/v2/sports/football/nfl/teams/{team_id}/roster"
         return self.get(path, sport=self.sport, league=self.league, force=force)
+
+    def player_gamelog(self, athlete_id: str, season: int, force: bool = False) -> Any:
+        """Fetch a player's game log for a given season."""
+        path = f"/apis/common/v3/sports/football/nfl/athletes/{athlete_id}/gamelog"
+        params = {"season": season}
+        return self.get(path, params=params, sport=self.sport, league=self.league, force=force)
 
     def schedule(self, team_id: Optional[str] = None, year: Optional[int] = None, week: Optional[int] = None, force: bool = False) -> Any:
         if team_id:

@@ -6,6 +6,18 @@ name = "pypi"
 [packages]
 google-genai = "*"
 pandas = "*"
+sqlalchemy = ">=2.0"
+alembic = "*"
+nfl-data-py = "*"
+dspy-ai = "*"
+anthropic = "*"
+openai = "*"
+pydantic = ">=2.0"
+pydantic-settings = "*"
+requests = "*"
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+python-dotenv = "*"
 
 [dev-packages]
 pytest = "*"

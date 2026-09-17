@@ -12,7 +12,7 @@ from nfl_data_aggregator.services.depthchart_service import DepthChartService
 
 def test_parse_sample_depthchart_orders_ranks():
     svc = DepthChartService()
-    fp = os.path.join(ROOT, "src", "nfl_data_aggregator", "data", "espn", "football", "nfl", "depthcharts", "2-2025.json")
+    fp = os.path.join(ROOT, "src", "data", "espn", "football", "nfl", "depthcharts", "2-2025.json")
     result = svc.parse_from_file(fp, force=True)
     # Expect schemas for the sample file
     assert any("Base" in k or "Base_4-3_D" in k for k in result.keys())
