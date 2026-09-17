@@ -20,6 +20,12 @@ cd better-bettor
 pipenv install
 ```
 
+Apply database migrations before starting an API or MCP process:
+
+```bash
+PYTHONPATH=src pipenv run alembic upgrade head
+```
+
 ### Environment Setup
 
 Copy the example env file and fill in your API keys:
@@ -133,6 +139,48 @@ pipenv run python scripts/run_super_bowl.py
 ```
 
 This script ingests data from ESPN, runs the prediction pipeline for key players, and stores results in the SQLite database. After running it, the API endpoints for stats, context, and prop recommendations will return populated data.
+
+## Running the MCP Server
+
+The local MCP server gives agents typed access to the verified database over
+stdio. Cached reads never call ESPN. A tool only performs network I/O when its
+`force` argument is explicitly set to `true`; successful refreshes are written
+to the database before the tool returns.
+
+```bash
+PYTHONPATH=src pipenv run python -m nfl_data_aggregator.mcp.server
+```
+
+Example client configuration (replace the working directory with your clone):
+
+```json
+{
+  "mcpServers": {
+    "gridiron-oracle": {
+      "command": "pipenv",
+      "args": ["run", "python", "-m", "nfl_data_aggregator.mcp.server"],
+      "cwd": "/absolute/path/to/better-bettor",
+      "env": {"PYTHONPATH": "/absolute/path/to/better-bettor/src"}
+    }
+  }
+}
+```
+
+Available tools:
+
+| Tool | Cached behavior | `force=true` behavior |
+|------|-----------------|-----------------------|
+| `get_cache_status` | Counts and cached season/week coverage | Not applicable |
+| `search_players` | Searches cached player records | Not applicable |
+| `get_player_performances` | Reads joined stats and game context | Requires `season`; refreshes that player's ESPN gamelog and games |
+| `list_games` | Reads schedules and outcomes | Requires `week`; refreshes that bounded league week |
+| `get_game_context` | Reads outcome, venue/location, weather, and defenses | Refreshes one ESPN event |
+| `get_roster` | Reads QB/RB/WR/TE/K by default | Refreshes one team; `include_all_positions=true` stores the full roster |
+
+Forced refreshes fail and roll back as a unit when ESPN is unavailable. They do
+not silently return stale data. `DATABASE_URL` selects the same database used by
+the REST API; for example, set it to `sqlite:///gridiron_oracle_superbowl.db` to
+query the populated Super Bowl database.
 
 To populate the DB-first roster endpoint with current skill-position players for all NFL teams:
 

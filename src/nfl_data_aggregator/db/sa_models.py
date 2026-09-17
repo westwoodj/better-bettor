@@ -48,6 +48,7 @@ class Game(Base):
     away_team: Mapped[str] = mapped_column(String(8))
     kickoff_time: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     venue: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    venue_location: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     weather_conditions: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     final_score: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
 

@@ -5,6 +5,7 @@ JSON into flat dictionaries suitable for database ingestion.
 """
 
 import logging
+import re
 from typing import Any, Optional
 
 from .espn_api import NFLClient
@@ -66,47 +67,88 @@ class ESPNStatsAdapter:
         """Parse ESPN scoreboard response into flat game dicts."""
         games = []
         for event in scoreboard_data.get("events", []):
-            competition = event.get("competitions", [{}])[0]
-            competitors = competition.get("competitors", [])
-
-            home_team = away_team = None
-            final_score = None
-            for comp in competitors:
-                abbr = comp.get("team", {}).get("abbreviation", "")
-                if comp.get("homeAway") == "home":
-                    home_team = abbr
-                else:
-                    away_team = abbr
-
-            # Build score string
-            scores = []
-            for comp in competitors:
-                scores.append(comp.get("score", "0"))
-            if len(scores) == 2:
-                final_score = f"{scores[0]}-{scores[1]}"
-
-            season_info = event.get("season", {})
-            game = {
-                "game_id": str(event.get("id", "")),
-                "season": season_info.get("year", 0),
-                "week": event.get("week", {}).get("number", 0) if isinstance(event.get("week"), dict) else 0,
-                "game_type": season_info.get("type", ""),
-                "home_team": home_team or "",
-                "away_team": away_team or "",
-                "kickoff_time": event.get("date"),
-                "venue": competition.get("venue", {}).get("fullName") if competition.get("venue") else None,
-                "final_score": final_score,
-            }
-            games.append(game)
+            game = self._extract_game(event, str(event.get("id", "")))
+            if game:
+                games.append(game)
         return games
 
-    def extract_players_from_roster(self, roster_data: dict, team_abbr: str = "") -> list[dict]:
-        """Parse ESPN roster response into flat player dicts, filtered to skill positions."""
+    def extract_game_from_event_summary(self, summary_data: dict, game_id: str) -> Optional[dict]:
+        """Parse game metadata from an ESPN event-summary response."""
+        header = summary_data.get("header", {}) if isinstance(summary_data, dict) else {}
+        competitions = header.get("competitions", []) if isinstance(header, dict) else []
+        if not competitions:
+            return None
+
+        event = dict(header)
+        event["id"] = str(header.get("id") or game_id)
+        event["competitions"] = competitions
+        if not event.get("season"):
+            event["season"] = summary_data.get("season", {})
+        if not event.get("week"):
+            event["week"] = summary_data.get("week", {})
+        game = self._extract_game(event, game_id)
+
+        game_info = summary_data.get("gameInfo", {}) or {}
+        if game and isinstance(game_info, dict):
+            venue = game_info.get("venue") or {}
+            if venue:
+                game["venue"] = venue.get("fullName") or game.get("venue")
+                game["venue_location"] = _venue_location(venue) or game.get("venue_location")
+            weather = game_info.get("weather") or {}
+            if weather:
+                game["weather_conditions"] = _weather_conditions(weather)
+        return game
+
+    def extract_game_ids_from_gamelog(self, gamelog_data: dict) -> list[str]:
+        """Return unique ESPN event IDs referenced by a player gamelog."""
+        found: list[str] = []
+
+        def add(value: Any) -> None:
+            if value is None:
+                return
+            text = str(value)
+            match = re.search(r"/events/(\d+)", text)
+            event_id = match.group(1) if match else text
+            if event_id.isdigit() and event_id not in found:
+                found.append(event_id)
+
+        def walk(value: Any, in_events: bool = False) -> None:
+            if isinstance(value, list):
+                for item in value:
+                    walk(item, in_events=in_events)
+                return
+            if not isinstance(value, dict):
+                return
+
+            if value.get("eventId") is not None:
+                add(value.get("eventId"))
+            event = value.get("event")
+            if isinstance(event, dict):
+                add(event.get("id") or event.get("$ref"))
+            elif event is not None:
+                add(event)
+            if in_events:
+                add(value.get("id") or value.get("uid") or value.get("$ref"))
+
+            for key, child in value.items():
+                walk(child, in_events=(key == "events"))
+
+        walk(gamelog_data)
+        return found
+
+    def extract_players_from_roster(
+        self,
+        roster_data: dict,
+        team_abbr: str = "",
+        *,
+        include_all_positions: bool = False,
+    ) -> list[dict]:
+        """Parse ESPN roster data, defaulting to prediction-relevant positions."""
         players = []
         for group in roster_data.get("athletes", []):
             for athlete in group.get("items", []):
                 pos = athlete.get("position", {}).get("abbreviation", "")
-                if pos not in SKILL_POSITIONS:
+                if not include_all_positions and pos not in SKILL_POSITIONS:
                     continue
                 status_info = athlete.get("status", {})
                 players.append({
@@ -121,6 +163,48 @@ class ESPNStatsAdapter:
                     "experience": _safe_int(athlete.get("experience", {}).get("years")) if isinstance(athlete.get("experience"), dict) else None,
                 })
         return players
+
+    def _extract_game(self, event: dict, fallback_game_id: str) -> Optional[dict]:
+        competitions = event.get("competitions", []) or []
+        if not competitions:
+            return None
+        competition = competitions[0] or {}
+        competitors = competition.get("competitors", []) or []
+
+        home = next((c for c in competitors if c.get("homeAway") == "home"), None)
+        away = next((c for c in competitors if c.get("homeAway") == "away"), None)
+        if home is None or away is None:
+            return None
+
+        home_score = home.get("score")
+        away_score = away.get("score")
+        status = competition.get("status", {}).get("type", {}) or {}
+        completed = status.get("completed")
+        final_score = None
+        if home_score is not None and away_score is not None and completed is not False:
+            final_score = f"{home_score}-{away_score}"
+
+        season_info = event.get("season", {}) or {}
+        week_info = event.get("week", {}) or {}
+        venue = competition.get("venue", {}) or {}
+        weather = competition.get("weather", {}) or {}
+        game_type = season_info.get("type")
+        if isinstance(game_type, dict):
+            game_type = game_type.get("type") or game_type.get("name")
+
+        return {
+            "game_id": str(event.get("id") or fallback_game_id),
+            "season": _safe_int(season_info.get("year")) or 0,
+            "week": _safe_int(week_info.get("number")) or 0,
+            "game_type": str(game_type) if game_type is not None else None,
+            "home_team": home.get("team", {}).get("abbreviation", ""),
+            "away_team": away.get("team", {}).get("abbreviation", ""),
+            "kickoff_time": event.get("date") or competition.get("date"),
+            "venue": venue.get("fullName"),
+            "venue_location": _venue_location(venue),
+            "weather_conditions": _weather_conditions(weather),
+            "final_score": final_score,
+        }
 
     def extract_stats_from_event_summary(self, summary_data: dict, game_id: str) -> list[dict]:
         """Parse an ESPN event summary into per-player stat dicts."""
@@ -249,3 +333,32 @@ def _safe_float(val: Any) -> Optional[float]:
         return float(val)
     except (ValueError, TypeError):
         return None
+
+
+def _venue_location(venue: dict) -> Optional[dict]:
+    address = venue.get("address", {}) if isinstance(venue, dict) else {}
+    if not isinstance(address, dict):
+        return None
+    location = {
+        "city": address.get("city"),
+        "state": address.get("state"),
+        "country": address.get("country"),
+        "zip_code": address.get("zipCode"),
+    }
+    return {key: value for key, value in location.items() if value not in (None, "")} or None
+
+
+def _weather_conditions(weather: dict) -> Optional[dict]:
+    if not isinstance(weather, dict) or not weather:
+        return None
+    condition = weather.get("displayValue")
+    if not condition and isinstance(weather.get("conditionId"), dict):
+        condition = weather["conditionId"].get("displayValue")
+    values = {
+        "temp": weather.get("temperature"),
+        "wind": weather.get("windSpeed"),
+        "wind_direction": weather.get("windDirection"),
+        "humidity": weather.get("humidity"),
+        "condition": condition,
+    }
+    return {key: value for key, value in values.items() if value not in (None, "")} or None
