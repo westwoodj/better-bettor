@@ -1,6 +1,6 @@
 # Convenience Makefile for local CI/test tasks
 
-.PHONY: ci-image act act-image test lint push-ci-image
+.PHONY: ci-image act act-image sync migrate mcp test lint push-ci-image
 
 # Build the pre-cached CI Docker image used to speed up `act` runs
 ci-image:
@@ -14,13 +14,27 @@ act:
 act-image:
 	act -j test --secret-file .secrets -P ubuntu-latest=nfl-data-aggregator-ci:latest
 
-# Run pytest locally (Windows cmd.exe compatible)
+# Install project + dev dependencies from uv.lock
+sync:
+	uv sync
+
+# Apply database migrations
+migrate:
+	uv run alembic upgrade head
+
+# Start the MCP server (stdio transport). `export` sets PYTHONPATH for the
+# recipe on both POSIX shells and Windows cmd.exe.
+mcp: export PYTHONPATH = src
+mcp:
+	uv run python -m nfl_data_aggregator.mcp.server
+
+# Run pytest locally (pythonpath is configured in pyproject.toml)
 test:
-	set PYTHONPATH=%CD% && pytest -q
+	uv run pytest -q
 
 # Lint using ruff
 lint:
-	ruff check .
+	uv run ruff check .
 
 # Push the CI Docker image to a registry. You must set DOCKER_REPO (e.g. username/repo).
 # Optional env vars:
