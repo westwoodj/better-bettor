@@ -5,7 +5,6 @@ If the library isn't installed, methods return empty results instead of crashing
 """
 
 import logging
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ class NflverseAdapter:
             logger.exception("Failed to import schedule from nflverse")
             return []
 
-    def get_player_weekly_stats(self, season: int, week: Optional[int] = None) -> list[dict]:
+    def get_player_weekly_stats(self, season: int, week: int | None = None) -> list[dict]:
         """Get player weekly stats for a specific season, optionally filtered by week."""
         if not _ensure_import():
             return []
@@ -169,7 +168,7 @@ class NflverseAdapter:
         return records
 
 
-def _safe_int(val) -> Optional[int]:
+def _safe_int(val) -> int | None:
     if val is None:
         return None
     try:
@@ -179,7 +178,7 @@ def _safe_int(val) -> Optional[int]:
         return None
 
 
-def _build_weather(row) -> Optional[dict]:
+def _build_weather(row) -> dict | None:
     temp = row.get("temp")
     wind = row.get("wind")
     if temp is None and wind is None:
@@ -192,7 +191,7 @@ def _build_weather(row) -> Optional[dict]:
     return weather or None
 
 
-def _build_score(row) -> Optional[str]:
+def _build_score(row) -> str | None:
     home = row.get("home_score")
     away = row.get("away_score")
     if home is not None and away is not None:

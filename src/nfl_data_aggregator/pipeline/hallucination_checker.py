@@ -6,7 +6,6 @@ reasoning text and verifies them against source data.
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .context_models import PredictionContext
 
@@ -233,7 +232,7 @@ class HallucinationChecker:
             prediction_sanity=sanity,
         )
 
-    def _get_actual_average(self, stat_type: str, context: PredictionContext) -> Optional[float]:
+    def _get_actual_average(self, stat_type: str, context: PredictionContext) -> float | None:
         """Get actual season average for a stat type from context."""
         avg_map = {
             "pass_yards": context.season_averages.avg_pass_yards,
@@ -247,7 +246,7 @@ class HallucinationChecker:
         }
         return avg_map.get(stat_type)
 
-    def _get_week_stat(self, stat_type: str, week: int, context: PredictionContext) -> Optional[float]:
+    def _get_week_stat(self, stat_type: str, week: int, context: PredictionContext) -> float | None:
         """Get actual stat for a specific week from context."""
         for game in context.recent_games:
             if game.week == week:

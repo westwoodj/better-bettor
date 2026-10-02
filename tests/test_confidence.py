@@ -1,15 +1,25 @@
 """Tests for data quality confidence scorer."""
 
-import os, sys
+import os
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from nfl_data_aggregator.pipeline.confidence import DataQualityConfidence, DataQualityScore
+from nfl_data_aggregator.pipeline.confidence import (
+    DataQualityConfidence,
+    DataQualityScore,
+)
 from nfl_data_aggregator.pipeline.context_models import (
-    PredictionContext, PlayerProfile, GameStats, SeasonAverages,
-    MatchupContext, GameEnvironment, PropLineContext,
+    GameEnvironment,
+    GameStats,
+    MatchupContext,
+    PlayerProfile,
+    PredictionContext,
+    PropLineContext,
+    SeasonAverages,
 )
 
 

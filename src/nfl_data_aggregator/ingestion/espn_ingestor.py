@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..adapters.espn_api import NFLClient
-from ..adapters.espn_stats_adapter import ESPNStatsAdapter, SKILL_POSITIONS
+from ..adapters.espn_stats_adapter import SKILL_POSITIONS, ESPNStatsAdapter
 from ..db.repository import GameRepo, PlayerRepo, StatsRepo
 from ..db.sa_models import Player, PlayerGameStats
 

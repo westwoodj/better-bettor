@@ -1,9 +1,7 @@
 """Pydantic v2 request/response schemas for the Gridiron Oracle REST API."""
 
-from typing import Optional
 
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel
 
 # --- Health ---
 
@@ -19,9 +17,9 @@ class HealthResponse(BaseModel):
 class PlayerResponse(BaseModel):
     player_id: str
     name: str
-    team: Optional[str] = None
-    position: Optional[str] = None
-    status: Optional[str] = None
+    team: str | None = None
+    position: str | None = None
+    status: str | None = None
 
 
 class PlayerSearchResponse(BaseModel):
@@ -34,9 +32,9 @@ class TeamSearchResult(BaseModel):
     id: str
     abbreviation: str
     displayName: str
-    shortDisplayName: Optional[str] = None
-    location: Optional[str] = None
-    nickname: Optional[str] = None
+    shortDisplayName: str | None = None
+    location: str | None = None
+    nickname: str | None = None
 
 
 class TeamSearchResponse(BaseModel):
@@ -47,14 +45,14 @@ class TeamSearchResponse(BaseModel):
 
 class RosterPlayerResponse(BaseModel):
     player_id: str
-    espn_id: Optional[str] = None
+    espn_id: str | None = None
     name: str
-    team: Optional[str] = None
-    position: Optional[str] = None
-    status: Optional[str] = None
-    height: Optional[str] = None
-    weight: Optional[int] = None
-    experience: Optional[int] = None
+    team: str | None = None
+    position: str | None = None
+    status: str | None = None
+    height: str | None = None
+    weight: int | None = None
+    experience: int | None = None
 
 
 class RosterResponse(BaseModel):
@@ -68,11 +66,11 @@ class GameSearchResult(BaseModel):
     game_id: str
     season: int
     week: int
-    game_type: Optional[str] = None
+    game_type: str | None = None
     home_team: str
     away_team: str
-    venue: Optional[str] = None
-    kickoff_time: Optional[str] = None
+    venue: str | None = None
+    kickoff_time: str | None = None
 
 
 class GameSearchResponse(BaseModel):
@@ -85,46 +83,46 @@ class DefenseProfileResponse(BaseModel):
     team: str
     season: int
     week_through: int
-    pass_yards_allowed: Optional[float] = None
-    rush_yards_allowed: Optional[float] = None
-    points_allowed: Optional[float] = None
-    pressure_rate: Optional[float] = None
+    pass_yards_allowed: float | None = None
+    rush_yards_allowed: float | None = None
+    points_allowed: float | None = None
+    pressure_rate: float | None = None
 
 
 class GameContextResponse(BaseModel):
     game_id: str
     season: int
     week: int
-    game_type: Optional[str] = None
+    game_type: str | None = None
     home_team: str
     away_team: str
-    venue: Optional[str] = None
-    weather_conditions: Optional[dict] = None
-    home_defense: Optional[DefenseProfileResponse] = None
-    away_defense: Optional[DefenseProfileResponse] = None
+    venue: str | None = None
+    weather_conditions: dict | None = None
+    home_defense: DefenseProfileResponse | None = None
+    away_defense: DefenseProfileResponse | None = None
 
 
 # --- Stats ---
 
 class GameStatRow(BaseModel):
     game_id: str
-    season: Optional[int] = None
-    week: Optional[int] = None
-    opponent: Optional[str] = None
-    pass_completions: Optional[int] = None
-    pass_attempts: Optional[int] = None
-    pass_yards: Optional[int] = None
-    pass_tds: Optional[int] = None
-    interceptions: Optional[int] = None
-    rush_attempts: Optional[int] = None
-    rush_yards: Optional[int] = None
-    rush_tds: Optional[int] = None
-    receptions: Optional[int] = None
-    targets: Optional[int] = None
-    receiving_yards: Optional[int] = None
-    receiving_tds: Optional[int] = None
-    fumbles: Optional[int] = None
-    fantasy_points: Optional[float] = None
+    season: int | None = None
+    week: int | None = None
+    opponent: str | None = None
+    pass_completions: int | None = None
+    pass_attempts: int | None = None
+    pass_yards: int | None = None
+    pass_tds: int | None = None
+    interceptions: int | None = None
+    rush_attempts: int | None = None
+    rush_yards: int | None = None
+    rush_tds: int | None = None
+    receptions: int | None = None
+    targets: int | None = None
+    receiving_yards: int | None = None
+    receiving_tds: int | None = None
+    fumbles: int | None = None
+    fantasy_points: float | None = None
 
 
 class PlayerStatsResponse(BaseModel):
@@ -136,25 +134,25 @@ class PlayerStatsResponse(BaseModel):
 
 class StatPredictionSchema(BaseModel):
     stat_name: str
-    floor: Optional[float] = None
-    expected: Optional[float] = None
-    ceiling: Optional[float] = None
+    floor: float | None = None
+    expected: float | None = None
+    ceiling: float | None = None
 
 
 class PredictionResponse(BaseModel):
     player_id: str
-    player_name: Optional[str] = None
+    player_name: str | None = None
     game_id: str
     predicted_stats: list[StatPredictionSchema] = []
     confidence_score: float = 0.0
-    confidence_grade: Optional[str] = None
-    trend_analysis: Optional[str] = None
-    matchup_assessment: Optional[str] = None
-    key_factors: Optional[str] = None
-    risk_factors: Optional[str] = None
-    prop_comparisons: list["PropRecommendation"] = []
-    data_snapshot_hash: Optional[str] = None
-    hallucination_passed: Optional[bool] = None
+    confidence_grade: str | None = None
+    trend_analysis: str | None = None
+    matchup_assessment: str | None = None
+    key_factors: str | None = None
+    risk_factors: str | None = None
+    prop_comparisons: list[PropRecommendation] = []
+    data_snapshot_hash: str | None = None
+    hallucination_passed: bool | None = None
 
 
 class BatchPredictionItem(BaseModel):
@@ -181,9 +179,9 @@ class PropRecommendation(BaseModel):
     predicted: float
     edge: float
     recommendation: str
-    sportsbook: Optional[str] = None
-    player_id: Optional[str] = None
-    player_name: Optional[str] = None
+    sportsbook: str | None = None
+    player_id: str | None = None
+    player_name: str | None = None
 
 
 class PropRecommendationsResponse(BaseModel):

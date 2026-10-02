@@ -15,6 +15,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from dotenv import load_dotenv
+
 load_dotenv(os.path.join(ROOT, ".env"))
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -23,11 +24,15 @@ logger = logging.getLogger("super_bowl")
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from nfl_data_aggregator.db.sa_models import Base
-from nfl_data_aggregator.db.repository import (
-    PlayerRepo, GameRepo, StatsRepo, PropLineRepo, DefenseProfileRepo,
-)
 from nfl_data_aggregator.adapters.espn_api import NFLClient
+from nfl_data_aggregator.db.repository import (
+    DefenseProfileRepo,
+    GameRepo,
+    PlayerRepo,
+    PropLineRepo,
+    StatsRepo,
+)
+from nfl_data_aggregator.db.sa_models import Base
 from nfl_data_aggregator.pipeline.prediction_pipeline import PredictionPipeline
 
 # --- Config -------------------------------------------------------------------
@@ -258,7 +263,8 @@ def seed_defense_profiles(session, espn_client):
     passing/rushing yards that opponent QBs/RBs/WRs put up against them.
     """
     from sqlalchemy import select
-    from nfl_data_aggregator.db.sa_models import PlayerGameStats, Game, Player
+
+    from nfl_data_aggregator.db.sa_models import Game, Player, PlayerGameStats
 
     repo = DefenseProfileRepo(session)
 
@@ -411,7 +417,7 @@ def print_results(results):
         print(f"  Data Quality: {qual:.0f}/100 (Grade {grade})")
 
         if result.predicted_stats:
-            print(f"\n  Predicted Stats:")
+            print("\n  Predicted Stats:")
             for stat, pred in result.predicted_stats.items():
                 if isinstance(pred, dict) and "expected" in pred:
                     floor = pred.get("floor", "?")
@@ -420,7 +426,7 @@ def print_results(results):
                     print(f"    {stat:20s}: {exp:>6} (range: {floor} - {ceil})")
 
         if result.prop_comparisons:
-            print(f"\n  Prop Recommendations:")
+            print("\n  Prop Recommendations:")
             for comp in result.prop_comparisons:
                 edge = comp["edge"]
                 arrow = ">> OVER " if edge > 0 else ">> UNDER"

@@ -1,15 +1,20 @@
 """Tests for the deterministic hallucination checker."""
 
-import os, sys
+import os
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from nfl_data_aggregator.pipeline.hallucination_checker import HallucinationChecker, PLAUSIBLE_RANGES
 from nfl_data_aggregator.pipeline.context_models import (
-    PredictionContext, PlayerProfile, GameStats, SeasonAverages,
+    GameStats,
+    PlayerProfile,
+    PredictionContext,
+    SeasonAverages,
 )
+from nfl_data_aggregator.pipeline.hallucination_checker import HallucinationChecker
 
 
 def _make_context():

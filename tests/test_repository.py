@@ -1,13 +1,20 @@
 """Tests for repository CRUD operations."""
 
-import os, sys
+import os
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from nfl_data_aggregator.db.repository import (
-    PlayerRepo, GameRepo, StatsRepo, PropLineRepo, PredictionRepo, DefenseProfileRepo,
+    DefenseProfileRepo,
+    GameRepo,
+    PlayerRepo,
+    PredictionRepo,
+    PropLineRepo,
+    StatsRepo,
 )
 
 

@@ -1,14 +1,20 @@
 """CRUD repository classes for Gridiron Oracle database access."""
 
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .sa_models import (
-    Player, Game, PlayerGameStats, PropLine, Prediction, DefenseProfile,
-    OddsEvent, OddsSnapshot, OddsLine,
+    DefenseProfile,
+    Game,
+    OddsEvent,
+    OddsLine,
+    OddsSnapshot,
+    Player,
+    PlayerGameStats,
+    Prediction,
+    PropLine,
 )
 
 
@@ -27,19 +33,19 @@ class PlayerRepo:
                     setattr(player, k, v)
         return player
 
-    def get(self, player_id: str) -> Optional[Player]:
+    def get(self, player_id: str) -> Player | None:
         return self.session.get(Player, player_id)
 
-    def find_by_name(self, name: str) -> Optional[Player]:
+    def find_by_name(self, name: str) -> Player | None:
         stmt = select(Player).where(Player.name == name)
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def find_by_name_fuzzy(self, name: str) -> Optional[Player]:
+    def find_by_name_fuzzy(self, name: str) -> Player | None:
         """Case-insensitive partial match on player name."""
         stmt = select(Player).where(Player.name.ilike(f"%{name}%"))
         return self.session.execute(stmt).scalars().first()
 
-    def find_by_espn_id(self, espn_id: str) -> Optional[Player]:
+    def find_by_espn_id(self, espn_id: str) -> Player | None:
         stmt = select(Player).where(Player.espn_id == espn_id)
         return self.session.execute(stmt).scalar_one_or_none()
 
@@ -63,7 +69,7 @@ class GameRepo:
                     setattr(game, k, v)
         return game
 
-    def get(self, game_id: str) -> Optional[Game]:
+    def get(self, game_id: str) -> Game | None:
         return self.session.get(Game, game_id)
 
     def find_by_week(self, season: int, week: int) -> list[Game]:
@@ -93,10 +99,10 @@ class StatsRepo:
                     setattr(stats, k, v)
         return stats
 
-    def get(self, player_id: str, game_id: str) -> Optional[PlayerGameStats]:
+    def get(self, player_id: str, game_id: str) -> PlayerGameStats | None:
         return self.session.get(PlayerGameStats, (player_id, game_id))
 
-    def get_player_games(self, player_id: str, season: Optional[int] = None) -> list[PlayerGameStats]:
+    def get_player_games(self, player_id: str, season: int | None = None) -> list[PlayerGameStats]:
         stmt = select(PlayerGameStats).where(PlayerGameStats.player_id == player_id)
         if season is not None:
             stmt = stmt.join(Game).where(Game.season == season)
@@ -147,10 +153,10 @@ class OddsRepo:
             for key, value in kwargs.items():
                 if value is not None:
                     setattr(event, key, value)
-            event.updated_at = datetime.now(timezone.utc)
+            event.updated_at = datetime.now(UTC)
         return event
 
-    def get_event(self, event_id: str) -> Optional[OddsEvent]:
+    def get_event(self, event_id: str) -> OddsEvent | None:
         return self.session.get(OddsEvent, event_id)
 
     def list_events(
@@ -169,7 +175,7 @@ class OddsRepo:
         stmt = stmt.order_by(OddsEvent.commence_time.asc(), OddsEvent.event_id.asc()).limit(limit)
         return list(self.session.scalars(stmt).all())
 
-    def latest_snapshot(self, event_id: str, request_signature: str) -> Optional[OddsSnapshot]:
+    def latest_snapshot(self, event_id: str, request_signature: str) -> OddsSnapshot | None:
         stmt = (
             select(OddsSnapshot)
             .where(
@@ -200,7 +206,7 @@ class PredictionRepo:
         self.session.add(pred)
         return pred
 
-    def get_latest(self, player_id: str, game_id: str) -> Optional[Prediction]:
+    def get_latest(self, player_id: str, game_id: str) -> Prediction | None:
         stmt = (
             select(Prediction)
             .where(Prediction.player_id == player_id, Prediction.game_id == game_id)
@@ -231,10 +237,10 @@ class DefenseProfileRepo:
             for k, v in kwargs.items():
                 if v is not None:
                     setattr(profile, k, v)
-            profile.updated_at = datetime.now(timezone.utc)
+            profile.updated_at = datetime.now(UTC)
         return profile
 
-    def get(self, team: str, season: int, week_through: int) -> Optional[DefenseProfile]:
+    def get(self, team: str, season: int, week_through: int) -> DefenseProfile | None:
         stmt = select(DefenseProfile).where(
             DefenseProfile.team == team,
             DefenseProfile.season == season,
@@ -242,7 +248,7 @@ class DefenseProfileRepo:
         )
         return self.session.execute(stmt).scalar_one_or_none()
 
-    def get_latest(self, team: str, season: int) -> Optional[DefenseProfile]:
+    def get_latest(self, team: str, season: int) -> DefenseProfile | None:
         stmt = (
             select(DefenseProfile)
             .where(DefenseProfile.team == team, DefenseProfile.season == season)

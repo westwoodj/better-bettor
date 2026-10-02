@@ -1,9 +1,9 @@
-from typing import Any, Optional
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
-from ..clients.google_genai_client import GoogleGenAIClient
 from ..adapters.espn_api import NFLClient
+from ..clients.google_genai_client import GoogleGenAIClient
 from .depthchart_service import DepthChartService
 
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ class GenAIFunctionService:
         }
     ]
 
-    def __init__(self, client: Optional[GoogleGenAIClient] = None, nfl_client: Optional[NFLClient] = None):
+    def __init__(self, client: GoogleGenAIClient | None = None, nfl_client: NFLClient | None = None):
         self.client = client or GoogleGenAIClient()
         self.nfl = nfl_client or NFLClient()
         self.depthsvc = DepthChartService(self.nfl)
@@ -61,7 +61,7 @@ class GenAIFunctionService:
             if not team_name:
                 raise ValueError("function call did not include a team_name")
             if year is None:
-                year = datetime.now(timezone.utc).year
+                year = datetime.now(UTC).year
             try:
                 # Fetch raw depth chart JSON
                 data = self.nfl.depth_chart_for_team_name(team_name=team_name, year=year, force=force)

@@ -9,6 +9,7 @@ from mcp.server.fastmcp import FastMCP
 from sqlalchemy import text
 
 from ..db.engine import get_session_factory, init_db
+from ..services.data_query_service import DataQueryError, DataQueryService
 from .schemas import (
     BettingLineHistoryResult,
     BettingLinesResult,
@@ -16,12 +17,11 @@ from .schemas import (
     GameContextResult,
     GamesResult,
     HealthResult,
+    OddsEventsResult,
     PlayerPerformancesResult,
     PlayerSearchResult,
     RosterResult,
-    OddsEventsResult,
 )
-from ..services.data_query_service import DataQueryError, DataQueryService
 
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger(__name__)

@@ -6,8 +6,7 @@ All formatting methods produce structured text for LLM consumption.
 
 import hashlib
 import json
-from dataclasses import dataclass, field, asdict
-from typing import Optional
+from dataclasses import dataclass, field
 
 
 @dataclass

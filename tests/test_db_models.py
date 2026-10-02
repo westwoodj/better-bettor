@@ -1,15 +1,25 @@
 """Tests for SQLAlchemy ORM models."""
 
-import os, sys
-from datetime import datetime, timezone
+import os
+import sys
+from datetime import UTC, datetime
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from nfl_data_aggregator.db.sa_models import (
-    Base, Player, Game, PlayerGameStats, PropLine, Prediction, DefenseProfile,
-    OddsEvent, OddsSnapshot, OddsLine,
+    Base,
+    DefenseProfile,
+    Game,
+    OddsEvent,
+    OddsLine,
+    OddsSnapshot,
+    Player,
+    PlayerGameStats,
+    Prediction,
+    PropLine,
 )
 
 
@@ -122,7 +132,7 @@ def test_odds_snapshot_preserves_repeated_fetches(session):
     event = OddsEvent(
         event_id="event-1",
         sport_key="americanfootball_nfl",
-        commence_time=datetime(2026, 9, 20, 17, 0, tzinfo=timezone.utc),
+        commence_time=datetime(2026, 9, 20, 17, 0, tzinfo=UTC),
         home_team="Kansas City Chiefs",
         away_team="Buffalo Bills",
     )

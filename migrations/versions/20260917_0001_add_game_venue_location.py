@@ -1,7 +1,7 @@
 """Add structured venue location for MCP game context."""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy import inspect
 
 from nfl_data_aggregator.db.sa_models import Base

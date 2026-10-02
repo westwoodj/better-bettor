@@ -1,9 +1,9 @@
-from typing import Any, Dict, List, Optional
 import json
 from pathlib import Path
+from typing import Any
 
 
-def load_local_dataset(path: str) -> List[Dict[str, Any]]:
+def load_local_dataset(path: str) -> list[dict[str, Any]]:
     """Load a local JSON/NDJSON dataset as the 'source truth'.
 
     This is an example helper that you can extend to read CSVs, Parquet,
@@ -37,7 +37,7 @@ def load_local_dataset(path: str) -> List[Dict[str, Any]]:
     return records
 
 
-def find_team_in_source(records: List[Dict[str, Any]], team_key: str) -> Optional[Dict[str, Any]]:
+def find_team_in_source(records: list[dict[str, Any]], team_key: str) -> dict[str, Any] | None:
     """Simple helper to match a team record by team key/name."""
     for r in records:
         if r.get("team_id") == team_key or r.get("team_name") == team_key:

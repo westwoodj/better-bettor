@@ -1,10 +1,10 @@
-from typing import Any, Dict, Optional
 import json
 import logging
+import os
 import time
 from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class ESPNClient:
     def __init__(
         self,
         base_url: str = "https://site.api.espn.com",
-        data_dir: Optional[Path] = None,
+        data_dir: Path | None = None,
         rate_limit_delay: float = 0.75,
         default_timeout: float = 10.0,
     ) -> None:
@@ -38,7 +38,7 @@ class ESPNClient:
         self.cache_ttl_seconds = int(os.environ.get("NFL_DATA_CACHE_TTL_SECONDS", 7 * 24 * 3600))
         self.rate_limit_delay = float(rate_limit_delay)
         self.default_timeout = float(default_timeout)
-        self._last_request_time: Optional[float] = None
+        self._last_request_time: float | None = None
 
         try:
             import requests
@@ -62,7 +62,7 @@ class ESPNClient:
         idx_dir.mkdir(parents=True, exist_ok=True)
         return idx_dir / "cache_index.json"
 
-    def _load_cache_index(self) -> Dict[str, Any]:
+    def _load_cache_index(self) -> dict[str, Any]:
         p = self._cache_index_path()
         if not p.exists():
             return {}
@@ -73,7 +73,7 @@ class ESPNClient:
             logger.exception("Failed to load cache index %s", p)
             return {}
 
-    def _save_cache_index(self, index: Dict[str, Any]) -> None:
+    def _save_cache_index(self, index: dict[str, Any]) -> None:
         p = self._cache_index_path()
         try:
             with p.open("w", encoding="utf-8") as fh:
@@ -81,7 +81,7 @@ class ESPNClient:
         except Exception:
             logger.exception("Failed to write cache index %s", p)
 
-    def _update_cache_index_entry(self, key: str, meta: Dict[str, Any]) -> None:
+    def _update_cache_index_entry(self, key: str, meta: dict[str, Any]) -> None:
         """Add or update an index entry. meta should include at least 'path' and 'type'."""
         idx = self._load_cache_index()
         meta = dict(meta)
@@ -104,7 +104,7 @@ class ESPNClient:
                 idx.pop(key, None)
                 self._save_cache_index(idx)
 
-    def _is_cache_fresh(self, key: str, ttl_seconds: Optional[int] = None) -> bool:
+    def _is_cache_fresh(self, key: str, ttl_seconds: int | None = None) -> bool:
         ttl = int(ttl_seconds) if ttl_seconds is not None else int(self.cache_ttl_seconds)
         idx = self._load_cache_index()
         ent = idx.get(key)
@@ -115,7 +115,7 @@ class ESPNClient:
             return False
         return (int(time.time()) - int(ts)) <= ttl
 
-    def clear_cache(self, *, team_id: Optional[str] = None, athlete_id: Optional[str] = None, older_than_seconds: Optional[int] = None) -> Dict[str, Any]:
+    def clear_cache(self, *, team_id: str | None = None, athlete_id: str | None = None, older_than_seconds: int | None = None) -> dict[str, Any]:
         """Purge cached entries. Returns a dict of removed keys -> True.
 
         - If team_id specified, removes depthchart entries for that team.
@@ -169,7 +169,7 @@ class ESPNClient:
             time.sleep(remaining)
         self._last_request_time = time.time()
 
-    def _find_local_data(self, sport: Optional[str], league: Optional[str], path: str, params: Optional[Dict[str, Any]] = None) -> Optional[Path]:
+    def _find_local_data(self, sport: str | None, league: str | None, path: str, params: dict[str, Any] | None = None) -> Path | None:
         """Heuristic search for a local JSON file corresponding to the requested resource.
 
         Strategy:
@@ -194,7 +194,7 @@ class ESPNClient:
 
         return None
 
-    def get(self, path: str, params: Optional[Dict[str, Any]] = None, *, sport: Optional[str] = None, league: Optional[str] = None, force: bool = False, timeout: Optional[float] = None) -> Any:
+    def get(self, path: str, params: dict[str, Any] | None = None, *, sport: str | None = None, league: str | None = None, force: bool = False, timeout: float | None = None) -> Any:
         """GET JSON from ESPN API or from local cache.
 
         - path: path relative to the base_url (may start with '/').
@@ -209,7 +209,7 @@ class ESPNClient:
         """
         # Merge default ESPN query params with caller-provided params; caller wins on key conflict
         default_query_params = {"lang": "en", "region": "us"}
-        merged_params: Dict[str, Any] = {**default_query_params, **(params or {})}
+        merged_params: dict[str, Any] = {**default_query_params, **(params or {})}
 
         # Try local data first unless force=True
         if not force:
@@ -264,9 +264,9 @@ class NFLClient(ESPNClient):
         self.sport = "football"
         self.league = "nfl"
 
-    def scoreboard(self, dates: Optional[str] = None, week: Optional[int] = None, seasontype: Optional[int] = None, force: bool = False) -> Any:
+    def scoreboard(self, dates: str | None = None, week: int | None = None, seasontype: int | None = None, force: bool = False) -> Any:
         path = "/apis/site/v2/sports/football/nfl/scoreboard"
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         if dates:
             params["dates"] = dates
         if week is not None:
@@ -293,7 +293,7 @@ class NFLClient(ESPNClient):
         params = {"season": season}
         return self.get(path, params=params, sport=self.sport, league=self.league, force=force)
 
-    def schedule(self, team_id: Optional[str] = None, year: Optional[int] = None, week: Optional[int] = None, force: bool = False) -> Any:
+    def schedule(self, team_id: str | None = None, year: int | None = None, week: int | None = None, force: bool = False) -> Any:
         if team_id:
             path = f"/apis/site/v2/sports/football/nfl/teams/{team_id}/schedule"
             params = {}
@@ -309,16 +309,16 @@ class NFLClient(ESPNClient):
         # use CDN endpoint for schedule if local cache absent
         return self._get_with_base(self.cdn_base, path, params=params, force=force)
 
-    def standings(self, season: Optional[int] = None, force: bool = False) -> Any:
+    def standings(self, season: int | None = None, force: bool = False) -> Any:
         path = "/apis/site/v2/sports/football/nfl/standings"
         params = {}
         if season:
             params["season"] = season
         return self.get(path, params=params, sport=self.sport, league=self.league, force=force)
 
-    def events(self, dates: Optional[str] = None, limit: Optional[int] = None, force: bool = False) -> Any:
+    def events(self, dates: str | None = None, limit: int | None = None, force: bool = False) -> Any:
         path = "/v2/sports/football/leagues/nfl/events"
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         if dates:
             params["dates"] = dates
         if limit is not None:
@@ -336,17 +336,17 @@ class NFLClient(ESPNClient):
         params = {"xhr": 1, "gameId": game_id}
         return self._get_with_base(self.cdn_base, path, params=params, force=force)
 
-    def plays(self, event_id: str, limit: Optional[int] = None, force: bool = False) -> Any:
+    def plays(self, event_id: str, limit: int | None = None, force: bool = False) -> Any:
         # core plays endpoint
         path = f"/v2/sports/football/leagues/nfl/events/{event_id}/competitions/{event_id}/plays"
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         if limit is not None:
             params["limit"] = limit
         return self._get_with_core(path, params=params, force=force)
 
-    def depth_chart(self, team_id: str, year: str, limit: Optional[int] = None, force: bool = False) -> Any:
+    def depth_chart(self, team_id: str, year: str, limit: int | None = None, force: bool = False) -> Any:
         path = f"/v2/sports/football/leagues/nfl/seasons/{year}/teams/{team_id}/depthcharts"
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         if limit is not None:
             params["limit"] = limit
         # Attempt to get data (may come from local cache or network). If network
@@ -380,10 +380,10 @@ class NFLClient(ESPNClient):
 
         return data
 
-    def _get_with_core(self, path: str, params: Optional[Dict[str, Any]] = None, force: bool = False) -> Any:
+    def _get_with_core(self, path: str, params: dict[str, Any] | None = None, force: bool = False) -> Any:
         return self._get_with_base(self.core_base, path, params=params, force=force)
 
-    def _get_with_base(self, base: str, path: str, params: Optional[Dict[str, Any]] = None, force: bool = False) -> Any:
+    def _get_with_base(self, base: str, path: str, params: dict[str, Any] | None = None, force: bool = False) -> Any:
         # Temporarily use a different base URL for this call but still honour local data lookup
         original_base = self.base_url
         try:
@@ -404,7 +404,7 @@ class NFLClient(ESPNClient):
         except Exception:
             return None
 
-    def find_team_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+    def find_team_by_name(self, name: str) -> dict[str, Any] | None:
         """Find a team entry by matching common name fields (case-insensitive).
 
         Matches against 'displayName', 'shortDisplayName', 'name', 'abbreviation', and 'slug'.
@@ -441,11 +441,11 @@ class NFLClient(ESPNClient):
                                     return team
         return None
 
-    def find_team_id(self, name: str) -> Optional[str]:
+    def find_team_id(self, name: str) -> str | None:
         team = self.find_team_by_name(name)
         return team.get("id") if team else None
 
-    def depth_chart_for_team_name(self, team_name: str, year: Optional[int] = None, limit: Optional[int] = None, force: bool = False) -> Any:
+    def depth_chart_for_team_name(self, team_name: str, year: int | None = None, limit: int | None = None, force: bool = False) -> Any:
         """Convenience wrapper that resolves a team name to an ESPN team id and returns the depth chart.
 
         If `year` is None the caller should substitute the current season externally.
@@ -479,7 +479,8 @@ class NFLClient(ESPNClient):
 
                 # attempt to parse athlete id and season from the ref URL for naming
                 try:
-                    import re, json as _json
+                    import json as _json
+                    import re
 
                     m = re.search(r"/seasons/(\d{4})/athletes/(\d+)", ref_url)
                     if m:

@@ -1,7 +1,6 @@
 """High-level prediction service wrapping the pipeline."""
 
 import logging
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -69,7 +68,7 @@ class PredictionService:
             return {"game_id": game_id, "weeks_ingested": [], "error": True}
 
     def predict_player_by_name(
-        self, name: str, game_id: Optional[str] = None
+        self, name: str, game_id: str | None = None
     ) -> PredictionResult:
         """Run prediction pipeline for a player by name.
 

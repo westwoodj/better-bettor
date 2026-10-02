@@ -1,11 +1,13 @@
 """API route handlers for Gridiron Oracle."""
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from ..adapters.espn_api import NFLClient
+from ..adapters.espn_stats_adapter import ESPNStatsAdapter
+from ..config.config import settings
 from ..db.repository import (
     DefenseProfileRepo,
     GameRepo,
@@ -13,10 +15,7 @@ from ..db.repository import (
     PredictionRepo,
     StatsRepo,
 )
-from ..config.config import settings
 from .app import get_db
-from ..adapters.espn_api import NFLClient
-from ..adapters.espn_stats_adapter import ESPNStatsAdapter
 from .schemas import (
     BatchPredictionRequest,
     BatchPredictionResponse,
@@ -196,13 +195,14 @@ def batch_predictions(
 
 @router.get("/props/recommendations", response_model=PropRecommendationsResponse)
 def get_prop_recommendations(
-    game_id: Optional[str] = Query(None, description="Filter by game ID"),
-    min_edge: Optional[float] = Query(None, description="Minimum edge threshold"),
-    sportsbook: Optional[str] = Query(None, description="Filter by sportsbook"),
+    game_id: str | None = Query(None, description="Filter by game ID"),
+    min_edge: float | None = Query(None, description="Minimum edge threshold"),
+    sportsbook: str | None = Query(None, description="Filter by sportsbook"),
     db: Session = Depends(get_db),
 ):
     """Get prop bet recommendations from stored predictions."""
     from sqlalchemy import select
+
     from ..db.sa_models import Prediction
 
     stmt = select(Prediction)
@@ -245,7 +245,7 @@ def get_prop_recommendations(
 @router.get("/props/recommendations/{player_id}", response_model=PropRecommendationsResponse)
 def get_player_props(
     player_id: str,
-    game_id: Optional[str] = Query(None, description="Filter by game ID"),
+    game_id: str | None = Query(None, description="Filter by game ID"),
     db: Session = Depends(get_db),
 ):
     """Get prop recommendations for a specific player."""
@@ -261,6 +261,7 @@ def get_player_props(
         predictions = [pred] if pred else []
     else:
         from sqlalchemy import select
+
         from ..db.sa_models import Prediction
 
         stmt = (
@@ -294,7 +295,7 @@ def get_player_props(
 @router.get("/players/{player_id}/stats", response_model=PlayerStatsResponse)
 def get_player_stats(
     player_id: str,
-    season: Optional[int] = Query(None, description="Filter by season"),
+    season: int | None = Query(None, description="Filter by season"),
     db: Session = Depends(get_db),
 ):
     """Get historical stats for a player."""
@@ -546,11 +547,12 @@ def get_team_roster(
 @router.get("/players/search", response_model=PlayerSearchResponse)
 def search_players(
     q: str = Query(..., min_length=1, description="Player name to search"),
-    team: Optional[str] = Query(None, description="Filter by team abbreviation"),
+    team: str | None = Query(None, description="Filter by team abbreviation"),
     db: Session = Depends(get_db),
 ):
     """Search players by name (fuzzy match). Optionally filter by team."""
     from sqlalchemy import select
+
     from ..db.sa_models import Player
 
     query = q.strip()
@@ -574,9 +576,9 @@ def search_players(
 
 @router.get("/games/search", response_model=GameSearchResponse)
 def search_games(
-    team: Optional[str] = Query(None, description="Team abbreviation"),
-    season: Optional[int] = Query(None, description="Season year"),
-    week: Optional[int] = Query(None, description="Week number"),
+    team: str | None = Query(None, description="Team abbreviation"),
+    season: int | None = Query(None, description="Season year"),
+    week: int | None = Query(None, description="Week number"),
     db: Session = Depends(get_db),
 ):
     """Search games by team, season, and/or week. At least one filter required."""
@@ -599,6 +601,7 @@ def search_games(
     elif team:
         # Team without season — search across all seasons via raw query
         from sqlalchemy import select
+
         from ..db.sa_models import Game
 
         stmt = select(Game).where(
@@ -608,6 +611,7 @@ def search_games(
     elif season is not None:
         # Season without team/week — all games in the season
         from sqlalchemy import select
+
         from ..db.sa_models import Game
 
         stmt = select(Game).where(Game.season == season)
@@ -615,6 +619,7 @@ def search_games(
     elif week is not None:
         # Week without season — not very useful but handle it
         from sqlalchemy import select
+
         from ..db.sa_models import Game
 
         stmt = select(Game).where(Game.week == week)

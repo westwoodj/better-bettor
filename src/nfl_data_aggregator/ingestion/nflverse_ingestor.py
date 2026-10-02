@@ -1,12 +1,11 @@
 """Ingest nflverse data (via nfl_data_py) into the database."""
 
 import logging
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from ..adapters.nflverse_adapter import NflverseAdapter
-from ..db.repository import PlayerRepo, GameRepo, StatsRepo, DefenseProfileRepo
+from ..db.repository import DefenseProfileRepo, GameRepo, PlayerRepo, StatsRepo
 
 logger = logging.getLogger(__name__)
 
@@ -110,8 +109,9 @@ class NflverseIngestor:
 
         Returns count of profiles created/updated.
         """
-        from sqlalchemy import select, func
-        from ..db.sa_models import Game, PlayerGameStats
+        from sqlalchemy import select
+
+        from ..db.sa_models import PlayerGameStats
 
         count = 0
         # Get all teams that played
@@ -179,7 +179,7 @@ class NflverseIngestor:
         logger.info("Defense profiles computed for %d teams through week %d", count, through_week)
         return count
 
-    def _find_game_id(self, team: str, season: int, week: Optional[int]) -> Optional[str]:
+    def _find_game_id(self, team: str, season: int, week: int | None) -> str | None:
         """Find a game_id for a team in a specific week."""
         if week is None:
             return None

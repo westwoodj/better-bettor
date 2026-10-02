@@ -1,6 +1,5 @@
 import os
 import sys
-import pytest
 
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")

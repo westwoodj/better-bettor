@@ -1,7 +1,7 @@
-from typing import List, Optional, Any, Dict
-from datetime import date
-from dataclasses import dataclass, asdict, field
 import json
+from dataclasses import asdict, dataclass, field
+from datetime import date
+from typing import Any
 
 # Provide a pydantic-compatible minimal fallback so the package can be used
 # without installing pydantic during initial development or static checks.
@@ -42,63 +42,63 @@ class TeamStats(BaseModel):
     team_id: str
     team_name: str
     season: int
-    wins: Optional[int] = None
-    losses: Optional[int] = None
-    points_for: Optional[float] = None
-    points_against: Optional[float] = None
-    offensive_rating: Optional[float] = None
-    defensive_rating: Optional[float] = None
+    wins: int | None = None
+    losses: int | None = None
+    points_for: float | None = None
+    points_against: float | None = None
+    offensive_rating: float | None = None
+    defensive_rating: float | None = None
 
 
 class PlayerStats(BaseModel):
     player_id: str
     player_name: str
     team_id: str
-    position: Optional[str] = None
+    position: str | None = None
     season: int = None
-    fantasy_points: Optional[float] = None
-    snaps_pct: Optional[float] = None
+    fantasy_points: float | None = None
+    snaps_pct: float | None = None
 
 
 class Matchup(BaseModel):
     matchup_id: str
     home_team: str
     away_team: str
-    start_time: Optional[date] = None
+    start_time: date | None = None
 
 
 class Odds(BaseModel):
     provider: str
-    spread: Optional[float] = None
-    spread_favorite: Optional[str] = None
-    moneyline_home: Optional[float] = None
-    moneyline_away: Optional[float] = None
-    total: Optional[float] = None
-    last_updated: Optional[str] = None
-    player_props: Optional[List[dict]] = None
+    spread: float | None = None
+    spread_favorite: str | None = None
+    moneyline_home: float | None = None
+    moneyline_away: float | None = None
+    total: float | None = None
+    last_updated: str | None = None
+    player_props: list[dict] | None = None
 
 
 class FeatureSet(BaseModel):
     matchup: Matchup
     home_team_stats: TeamStats
     away_team_stats: TeamStats
-    injured_players: Optional[List[PlayerStats]] = []
-    market_odds: Optional[List[Odds]] = []
+    injured_players: list[PlayerStats] | None = []
+    market_odds: list[Odds] | None = []
 
 
 class Recommendation(BaseModel):
     matchup_id: str
-    best_spread: Optional[float] = None
-    best_spread_side: Optional[str] = None
-    best_moneyline: Optional[str] = None
-    best_total: Optional[float] = None
-    player_props: Optional[List[dict]] = []
-    rationale: Optional[str] = None
+    best_spread: float | None = None
+    best_spread_side: str | None = None
+    best_moneyline: str | None = None
+    best_total: float | None = None
+    player_props: list[dict] | None = []
+    rationale: str | None = None
 
 
 class RawModelResponse(BaseModel):
     raw_text: str
-    parsed: Optional[Recommendation] = None
+    parsed: Recommendation | None = None
 
 
 @dataclass
@@ -113,18 +113,18 @@ class Athlete:
     - slot: integer slot number
     - rank: integer rank within position/slot
     """
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    position: Optional[str] = None
-    id: Optional[str] = None
-    is_healthy: Optional[bool] = None
-    slot: Optional[int] = None
-    rank: Optional[int] = None
+    first_name: str | None = None
+    last_name: str | None = None
+    position: str | None = None
+    id: str | None = None
+    is_healthy: bool | None = None
+    slot: int | None = None
+    rank: int | None = None
     # store any additional metadata from the athlete resource
-    meta: Dict[str, Any] = field(default_factory=dict)
+    meta: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, d: dict) -> "Athlete":
+    def from_dict(cls, d: dict) -> Athlete:
         # Support both ESPN athlete object shapes and our internal shape
         first = None
         last = None
@@ -194,9 +194,9 @@ class Athlete:
 class StatPrediction(BaseModel):
     """Predicted stat with floor/expected/ceiling range."""
     stat_name: str
-    floor: Optional[float] = None
-    expected: Optional[float] = None
-    ceiling: Optional[float] = None
+    floor: float | None = None
+    expected: float | None = None
+    ceiling: float | None = None
 
 
 class PropComparisonItem(BaseModel):
@@ -206,20 +206,20 @@ class PropComparisonItem(BaseModel):
     predicted: float
     edge: float
     recommendation: str  # "over" or "under"
-    sportsbook: Optional[str] = None
+    sportsbook: str | None = None
 
 
 class PlayerPredictionResponse(BaseModel):
     """Full prediction response for a player."""
     player_id: str
-    player_name: Optional[str] = None
+    player_name: str | None = None
     game_id: str
-    predicted_stats: Optional[List[StatPrediction]] = []
+    predicted_stats: list[StatPrediction] | None = []
     confidence_score: float = 0.0
-    confidence_grade: Optional[str] = None
-    trend_analysis: Optional[str] = None
-    matchup_assessment: Optional[str] = None
-    key_factors: Optional[str] = None
-    risk_factors: Optional[str] = None
-    prop_comparisons: Optional[List[PropComparisonItem]] = []
-    data_snapshot_hash: Optional[str] = None
+    confidence_grade: str | None = None
+    trend_analysis: str | None = None
+    matchup_assessment: str | None = None
+    key_factors: str | None = None
+    risk_factors: str | None = None
+    prop_comparisons: list[PropComparisonItem] | None = []
+    data_snapshot_hash: str | None = None

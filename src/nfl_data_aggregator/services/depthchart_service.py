@@ -1,7 +1,7 @@
-from typing import Any, Dict, Optional
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 from ..adapters.espn_api import NFLClient
 from ..models import Athlete
@@ -16,10 +16,10 @@ class DepthChartService:
     to pandas.DataFrame objects. Athletes are represented by the `Athlete` dataclass.
     """
 
-    def __init__(self, nfl_client: Optional[NFLClient] = None):
+    def __init__(self, nfl_client: NFLClient | None = None):
         self.nfl = nfl_client or NFLClient()
 
-    def parse_from_file(self, file_path: str, team_id: Optional[str] = None, year: Optional[int] = None, force: bool = False) -> Dict[str, Any]:
+    def parse_from_file(self, file_path: str, team_id: str | None = None, year: int | None = None, force: bool = False) -> dict[str, Any]:
         p = Path(file_path)
         with p.open("r", encoding="utf-8") as fh:
             import json
@@ -27,12 +27,12 @@ class DepthChartService:
             data = json.load(fh)
         return self.parse_depthchart(data=data, team_id=team_id or self._infer_team_id_from_filename(p.stem), year=year or self._infer_year_from_filename(p.stem), force=force)
 
-    def _infer_team_id_from_filename(self, stem: str) -> Optional[str]:
+    def _infer_team_id_from_filename(self, stem: str) -> str | None:
         # Example filename: '2-2025' -> team_id 2
         m = re.match(r"(\d+)-\d{4}", stem)
         return m.group(1) if m else None
 
-    def _infer_year_from_filename(self, stem: str) -> Optional[int]:
+    def _infer_year_from_filename(self, stem: str) -> int | None:
         m = re.match(r"\d+-(\d{4})", stem)
         return int(m.group(1)) if m else None
 
@@ -42,7 +42,7 @@ class DepthChartService:
         s = re.sub(r"[^0-9A-Za-z_-]", "", s)
         return s
 
-    def parse_depthchart(self, data: dict, team_id: Optional[str], year: Optional[int], force: bool = False) -> Dict[str, Any]:
+    def parse_depthchart(self, data: dict, team_id: str | None, year: int | None, force: bool = False) -> dict[str, Any]:
         """Parse depth chart JSON response into DataFrames per schema.
 
         Returns a dict: { 'teamid_schema_year': DataFrame }
@@ -53,7 +53,7 @@ class DepthChartService:
             raise RuntimeError("pandas is required for depth chart parsing; pip install pandas") from exc
 
         items = data.get("items", []) if isinstance(data, dict) else []
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
 
         for item in items:
             schema_name = item.get("name") or item.get("displayName") or "schema"

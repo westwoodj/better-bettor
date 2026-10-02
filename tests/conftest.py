@@ -13,8 +13,16 @@ if SRC not in sys.path:
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from nfl_data_aggregator.db.sa_models import Base, Player, Game, PlayerGameStats, PropLine, DefenseProfile
-from nfl_data_aggregator.db.repository import PlayerRepo, GameRepo, StatsRepo, PropLineRepo, DefenseProfileRepo
+from nfl_data_aggregator.db.repository import (
+    DefenseProfileRepo,
+    GameRepo,
+    PlayerRepo,
+    PropLineRepo,
+    StatsRepo,
+)
+from nfl_data_aggregator.db.sa_models import (
+    Base,
+)
 
 
 @pytest.fixture

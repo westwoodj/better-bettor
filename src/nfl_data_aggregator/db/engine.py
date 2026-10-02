@@ -1,7 +1,7 @@
 """SQLAlchemy engine and session factory for Gridiron Oracle."""
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from ..config.config import settings
 
@@ -32,7 +32,7 @@ def get_session_factory(engine=None) -> sessionmaker[Session]:
 
 def init_db(url: str | None = None):
     """Create all tables defined in sa_models."""
-    from . import sa_models  # noqa: F401 — ensure models are registered
+    from . import sa_models
 
     engine = get_engine(url)
     sa_models.Base.metadata.create_all(engine)

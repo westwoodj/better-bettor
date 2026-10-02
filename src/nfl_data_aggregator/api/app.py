@@ -1,9 +1,8 @@
 """FastAPI application factory with DB lifecycle, auth, and CORS."""
 
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
-from typing import Generator, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Security
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +25,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     yield
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     """Dependency that yields a DB session and closes it after the request."""
     factory = get_session_factory()
     session = factory()
@@ -36,7 +35,7 @@ def get_db() -> Generator[Session, None, None]:
         session.close()
 
 
-def verify_api_key(api_key: Optional[str] = Security(_api_key_header)) -> Optional[str]:
+def verify_api_key(api_key: str | None = Security(_api_key_header)) -> str | None:
     """Verify the API key if one is configured in settings.
 
     If no API_KEY is set in the environment, all requests are allowed.

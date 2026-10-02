@@ -1,12 +1,15 @@
 """Integration test for the prediction pipeline with mocked DSPy LM."""
 
-import os, sys
+import os
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 import json
+
 import pytest
 
 try:
@@ -15,7 +18,10 @@ try:
 except ImportError:
     HAS_DSPY = False
 
-from nfl_data_aggregator.pipeline.prediction_pipeline import PredictionPipeline, PredictionResult
+from nfl_data_aggregator.pipeline.prediction_pipeline import (
+    PredictionPipeline,
+    PredictionResult,
+)
 
 
 def _dummy_lm():

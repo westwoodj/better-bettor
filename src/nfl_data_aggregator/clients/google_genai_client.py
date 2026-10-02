@@ -1,7 +1,7 @@
-from typing import Optional, Any, Dict
+import json
 import logging
 import os
-import json
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class GoogleGenAIClient:
     contacting the real API during development.
     """
 
-    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+    def __init__(self, api_key: str | None = None, model: str | None = None):
         self.api_key = api_key or os.environ.get("GOOGLE_GENAI_API_KEY")
         self.model = model or os.environ.get("GOOGLE_GENAI_MODEL", "models/text-bison-001")
         self._client = None
@@ -34,7 +34,7 @@ class GoogleGenAIClient:
             self._client = None
             return False
 
-    def generate_text(self, prompt: str, temperature: float = 0.0, max_output_tokens: int = 512) -> Dict[str, Any]:
+    def generate_text(self, prompt: str, temperature: float = 0.0, max_output_tokens: int = 512) -> dict[str, Any]:
         """Generate text from the model.
 
         Returns a dict containing at least 'raw_text'. If the real client is
@@ -68,7 +68,7 @@ class GoogleGenAIClient:
         )
         return {"raw_text": mock_text}
 
-    def _parse_function_call_from_payload(self, payload: Any) -> Optional[Dict[str, Any]]:
+    def _parse_function_call_from_payload(self, payload: Any) -> dict[str, Any] | None:
         """Attempt to locate a function/tool call in various response payload shapes.
 
         Returns {'name': ..., 'arguments': {...}} or None.
@@ -134,7 +134,7 @@ class GoogleGenAIClient:
                         return {"name": name, "arguments": _parse_args(args)}
                     # try object content
                     if hasattr(candidate, "message"):
-                        msg = getattr(candidate, "message")
+                        msg = candidate.message
                         fc = None
                         if isinstance(msg, dict):
                             fc = msg.get("function_call")
@@ -147,7 +147,7 @@ class GoogleGenAIClient:
 
             # 3) OpenAI-like structure: dict with 'choices' -> message -> function_call
             if isinstance(payload, dict):
-                if "choices" in payload and payload["choices"]:
+                if payload.get("choices"):
                     choice = payload["choices"][0]
                     msg = choice.get("message") or choice.get("text")
                     if isinstance(msg, dict):
@@ -180,7 +180,7 @@ class GoogleGenAIClient:
             logger.exception("Error parsing function call from payload: %s", exc)
         return None
 
-    def call_with_functions(self, prompt: str, functions: Optional[list] = None, temperature: float = 0.0, max_output_tokens: int = 1024) -> Dict[str, Any]:
+    def call_with_functions(self, prompt: str, functions: list | None = None, temperature: float = 0.0, max_output_tokens: int = 1024) -> dict[str, Any]:
         """Call the model and allow it to return a function call instruction.
 
         Returns a dict with keys:
@@ -238,7 +238,7 @@ class GoogleGenAIClient:
                             # attempt to extract a text candidate
                             # many Response objects provide an 'output' or 'candidates' text
                             if hasattr(resp, "output"):
-                                outs = getattr(resp, "output")
+                                outs = resp.output
                                 if outs:
                                     first = outs[0]
                                     # first may contain content list with text items
@@ -253,7 +253,7 @@ class GoogleGenAIClient:
                                                 # try object
                                                 raw_text = raw_text or getattr(c, "text", None) or raw_text
                             if not raw_text and hasattr(resp, "candidates"):
-                                cands = getattr(resp, "candidates")
+                                cands = resp.candidates
                                 if cands:
                                     cand = cands[0]
                                     raw_text = getattr(cand, "content", None) or getattr(cand, "text", None) or (cand.get("text") if isinstance(cand, dict) else "")

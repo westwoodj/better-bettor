@@ -1,15 +1,17 @@
 """Persistence, cache, history, and linking tests for sportsbook lines."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import func, select
 
 from nfl_data_aggregator.adapters.odds_api import OddsAPIError, OddsAPIResponse
 from nfl_data_aggregator.db.repository import GameRepo, PlayerRepo
-from nfl_data_aggregator.db.sa_models import OddsEvent, OddsLine, OddsSnapshot
-from nfl_data_aggregator.services.odds_query_service import OddsQueryError, OddsQueryService
-
+from nfl_data_aggregator.db.sa_models import OddsLine, OddsSnapshot
+from nfl_data_aggregator.services.odds_query_service import (
+    OddsQueryError,
+    OddsQueryService,
+)
 
 EVENT = {
     "id": "event-1",
@@ -51,7 +53,7 @@ def odds_payload():
 
 class Clock:
     def __init__(self):
-        self.value = datetime(2026, 9, 20, 12, 5, tzinfo=timezone.utc)
+        self.value = datetime(2026, 9, 20, 12, 5, tzinfo=UTC)
 
     def __call__(self):
         return self.value

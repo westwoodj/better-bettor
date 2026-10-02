@@ -5,17 +5,24 @@ PredictionContext for the DSPy pipeline stages.
 """
 
 import logging
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from ..db.repository import (
-    PlayerRepo, GameRepo, StatsRepo, PropLineRepo, DefenseProfileRepo,
+    DefenseProfileRepo,
+    GameRepo,
+    PlayerRepo,
+    PropLineRepo,
+    StatsRepo,
 )
-from ..db.sa_models import Game
 from .context_models import (
-    PredictionContext, PlayerProfile, GameStats, SeasonAverages,
-    MatchupContext, GameEnvironment, PropLineContext,
+    GameEnvironment,
+    GameStats,
+    MatchupContext,
+    PlayerProfile,
+    PredictionContext,
+    PropLineContext,
+    SeasonAverages,
 )
 
 logger = logging.getLogger(__name__)
@@ -167,8 +174,8 @@ class ContextAssembler:
             total_receiving_yards=_sum("receiving_yards"),
         )
 
-    def _verify_roster(self, player_name: str, espn_id: Optional[str],
-                       team: Optional[str], game_row) -> tuple[bool, list[str]]:
+    def _verify_roster(self, player_name: str, espn_id: str | None,
+                       team: str | None, game_row) -> tuple[bool, list[str]]:
         """Verify the player is on a current roster for this game.
 
         Checks BOTH teams' ESPN rosters (home and away) by ID and name.
@@ -239,7 +246,7 @@ class ContextAssembler:
         )
         return False, warnings
 
-    def _resolve_team_id(self, team_abbr: str) -> Optional[str]:
+    def _resolve_team_id(self, team_abbr: str) -> str | None:
         """Resolve a team abbreviation to an ESPN team ID."""
         team_obj = self._espn_client.find_team_by_name(team_abbr)
         if team_obj is not None:
@@ -248,8 +255,8 @@ class ContextAssembler:
 
     @staticmethod
     def _find_player_in_roster(
-        roster_data, espn_id: Optional[str], player_name: str
-    ) -> Optional[tuple[str, str, str]]:
+        roster_data, espn_id: str | None, player_name: str
+    ) -> tuple[str, str, str] | None:
         """Search a roster response for a player by ID or name.
 
         Returns (matched_id, matched_name, match_type) or None.

@@ -2,7 +2,11 @@
 This is a small helper you can run from the repo root to populate the cache index
 used by the ESPN client.
 """
-import sys, os, json, re
+import json
+import os
+import re
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, 'src')
 if SRC not in sys.path:

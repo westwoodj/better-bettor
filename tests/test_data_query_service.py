@@ -5,7 +5,10 @@ from sqlalchemy import func, select
 
 from nfl_data_aggregator.db.repository import GameRepo, PlayerRepo, StatsRepo
 from nfl_data_aggregator.db.sa_models import Game
-from nfl_data_aggregator.services.data_query_service import DataQueryError, DataQueryService
+from nfl_data_aggregator.services.data_query_service import (
+    DataQueryError,
+    DataQueryService,
+)
 
 
 def _summary(game_id="401000001", week=1, player_id="p1"):

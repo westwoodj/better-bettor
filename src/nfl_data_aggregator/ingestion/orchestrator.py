@@ -6,8 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db.engine import get_session_factory, init_db
-from ..db.sa_models import Player
 from ..db.repository import StatsRepo
+from ..db.sa_models import Player
 from .espn_ingestor import ESPNIngestor
 from .nflverse_ingestor import NflverseIngestor
 

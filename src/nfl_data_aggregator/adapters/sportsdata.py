@@ -1,9 +1,9 @@
-from typing import List, Optional
 from datetime import date
-from ..models import TeamStats, PlayerStats
+
+from ..models import PlayerStats, TeamStats
 
 
-def fetch_team_stats(team_id: str, season: Optional[int] = None) -> TeamStats:
+def fetch_team_stats(team_id: str, season: int | None = None) -> TeamStats:
     """Mock/example fetcher for team-level statistics.
 
     Replace with a real HTTP call to SportsDataIO, Sportradar, etc.
@@ -22,7 +22,7 @@ def fetch_team_stats(team_id: str, season: Optional[int] = None) -> TeamStats:
     )
 
 
-def fetch_injured_players(team_id: str) -> List[PlayerStats]:
+def fetch_injured_players(team_id: str) -> list[PlayerStats]:
     """Return a small list of injured players (mock)."""
     return [
         PlayerStats(

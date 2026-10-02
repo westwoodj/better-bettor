@@ -1,5 +1,6 @@
-from src.nfl_data_aggregator.adapters.espn_api import NFLClient
 import json
+
+from src.nfl_data_aggregator.adapters.espn_api import NFLClient
 
 
 def test_teams_reads_local_cache():

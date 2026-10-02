@@ -1,10 +1,9 @@
-from typing import Optional
 import os
 
 # Try pydantic-settings (pydantic v2) first, then fall back to pydantic v1, then minimal impl
 try:
+    from pydantic import ConfigDict, Field
     from pydantic_settings import BaseSettings
-    from pydantic import Field, ConfigDict
     _HAS_PYDANTIC_V2 = True
 except Exception:
     _HAS_PYDANTIC_V2 = False
@@ -13,19 +12,19 @@ except Exception:
     except Exception:
         BaseSettings = object
 
-        def Field(default=None, env: Optional[str] = None, **kwargs):
+        def Field(default=None, env: str | None = None, **kwargs):
             return default
 
 
 class Settings(BaseSettings):
     # Google GenAI API key (or path to credential file depending on your setup)
-    GOOGLE_GENAI_API_KEY: Optional[str] = os.environ.get("GOOGLE_GENAI_API_KEY")
+    GOOGLE_GENAI_API_KEY: str | None = os.environ.get("GOOGLE_GENAI_API_KEY")
     # default model to use
     GOOGLE_GENAI_MODEL: str = os.environ.get("GOOGLE_GENAI_MODEL", "models/text-bison-001")
 
     # Example adapters keys (placeholders)
-    SPORTS_DATA_API_KEY: Optional[str] = os.environ.get("SPORTS_DATA_API_KEY")
-    ODDS_API_KEY: Optional[str] = os.environ.get("ODDS_API_KEY")
+    SPORTS_DATA_API_KEY: str | None = os.environ.get("SPORTS_DATA_API_KEY")
+    ODDS_API_KEY: str | None = os.environ.get("ODDS_API_KEY")
     ODDS_API_REGIONS: str = os.environ.get("ODDS_API_REGIONS", "us")
     ODDS_CACHE_TTL_SECONDS: int = int(os.environ.get("ODDS_CACHE_TTL_SECONDS", "900"))
 
@@ -34,8 +33,8 @@ class Settings(BaseSettings):
 
     # DSPy / LLM configuration
     DSPY_LM_PROVIDER: str = os.environ.get("DSPY_LM_PROVIDER", "anthropic")
-    ANTHROPIC_API_KEY: Optional[str] = os.environ.get("ANTHROPIC_API_KEY")
-    OPENAI_API_KEY: Optional[str] = os.environ.get("OPENAI_API_KEY")
+    ANTHROPIC_API_KEY: str | None = os.environ.get("ANTHROPIC_API_KEY")
+    OPENAI_API_KEY: str | None = os.environ.get("OPENAI_API_KEY")
     DSPY_MODEL: str = os.environ.get("DSPY_MODEL", "claude-sonnet-4-20250514")
     DSPY_TEMPERATURE_ANALYSIS: float = float(os.environ.get("DSPY_TEMPERATURE_ANALYSIS", "0.3"))
     DSPY_TEMPERATURE_PREDICTION: float = float(os.environ.get("DSPY_TEMPERATURE_PREDICTION", "0.1"))

@@ -6,7 +6,7 @@ JSON into flat dictionaries suitable for database ingestion.
 
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 from .espn_api import NFLClient
 
@@ -72,7 +72,7 @@ class ESPNStatsAdapter:
                 games.append(game)
         return games
 
-    def extract_game_from_event_summary(self, summary_data: dict, game_id: str) -> Optional[dict]:
+    def extract_game_from_event_summary(self, summary_data: dict, game_id: str) -> dict | None:
         """Parse game metadata from an ESPN event-summary response."""
         header = summary_data.get("header", {}) if isinstance(summary_data, dict) else {}
         competitions = header.get("competitions", []) if isinstance(header, dict) else []
@@ -164,7 +164,7 @@ class ESPNStatsAdapter:
                 })
         return players
 
-    def _extract_game(self, event: dict, fallback_game_id: str) -> Optional[dict]:
+    def _extract_game(self, event: dict, fallback_game_id: str) -> dict | None:
         competitions = event.get("competitions", []) or []
         if not competitions:
             return None
@@ -317,7 +317,7 @@ def _merge_player_stats(stats_list: list[dict]) -> list[dict]:
     return list(merged.values())
 
 
-def _safe_int(val: Any) -> Optional[int]:
+def _safe_int(val: Any) -> int | None:
     if val is None:
         return None
     try:
@@ -326,7 +326,7 @@ def _safe_int(val: Any) -> Optional[int]:
         return None
 
 
-def _safe_float(val: Any) -> Optional[float]:
+def _safe_float(val: Any) -> float | None:
     if val is None:
         return None
     try:
@@ -335,7 +335,7 @@ def _safe_float(val: Any) -> Optional[float]:
         return None
 
 
-def _venue_location(venue: dict) -> Optional[dict]:
+def _venue_location(venue: dict) -> dict | None:
     address = venue.get("address", {}) if isinstance(venue, dict) else {}
     if not isinstance(address, dict):
         return None
@@ -348,7 +348,7 @@ def _venue_location(venue: dict) -> Optional[dict]:
     return {key: value for key, value in location.items() if value not in (None, "")} or None
 
 
-def _weather_conditions(weather: dict) -> Optional[dict]:
+def _weather_conditions(weather: dict) -> dict | None:
     if not isinstance(weather, dict) or not weather:
         return None
     condition = weather.get("displayValue")

@@ -1,5 +1,7 @@
 from src.nfl_data_aggregator.models import Matchup
-from src.nfl_data_aggregator.services.recommendation_service import RecommendationService
+from src.nfl_data_aggregator.services.recommendation_service import (
+    RecommendationService,
+)
 
 
 def test_matchup_and_recommendation_flow():

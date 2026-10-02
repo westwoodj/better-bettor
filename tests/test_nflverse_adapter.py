@@ -1,12 +1,15 @@
 """Tests for nflverse adapter with mocked nfl_data_py."""
 
-import os, sys
+import os
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+
 import pytest
 
 from nfl_data_aggregator.adapters.nflverse_adapter import NflverseAdapter

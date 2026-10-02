@@ -2,17 +2,16 @@
 
 import logging
 from dataclasses import dataclass, field
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from ..db.repository import PredictionRepo
+from .confidence import DataQualityConfidence
 from .context_assembler import ContextAssembler
 from .context_models import PredictionContext
+from .hallucination_checker import HallucinationChecker, HallucinationResult
 from .player_analysis import PlayerAnalysis
 from .prediction_generator import PredictionGenerator
-from .hallucination_checker import HallucinationChecker, HallucinationResult
-from .confidence import DataQualityConfidence, DataQualityScore
-from ..db.repository import PredictionRepo
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +31,7 @@ class PredictionResult:
     matchup_assessment: str = ""
     key_factors: str = ""
     risk_factors: str = ""
-    hallucination_check: Optional[HallucinationResult] = None
+    hallucination_check: HallucinationResult | None = None
     data_snapshot_hash: str = ""
     prop_comparisons: list[dict] = field(default_factory=list)
 

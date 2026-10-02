@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -53,7 +53,7 @@ class OddsQueryService:
         self.client = client or OddsAPIClient()
         self.espn_client = espn_client or NFLClient()
         self.repo = OddsRepo(session)
-        self.now = now or (lambda: datetime.now(timezone.utc))
+        self.now = now or (lambda: datetime.now(UTC))
         self.ttl_seconds = max(0, int(settings.ODDS_CACHE_TTL_SECONDS))
 
     def list_events(
@@ -548,8 +548,8 @@ def _parse_datetime(value: Any, field: str) -> datetime:
 
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
-    return value.astimezone(timezone.utc)
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 def _iso_z(value: datetime | None) -> str | None:

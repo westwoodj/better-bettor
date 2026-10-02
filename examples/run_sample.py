@@ -5,7 +5,7 @@ GoogleGenAIClient's fallback to demonstrate the flow without real API keys.
 """
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 # Ensure the `src` folder is on sys.path so this example can be run without
 # installing the package into the environment. This is common for projects
@@ -77,7 +77,7 @@ def main():
         matchup_id="2025-10-12-NE-PHI",
         home_team="NE",
         away_team="PHI",
-        start_time=datetime.now(timezone.utc).date(),
+        start_time=datetime.now(UTC).date(),
     )
 
     svc = RecommendationService()

@@ -1,6 +1,10 @@
 """Inspect cache_index.json and print a short summary (count and first 10 entries with age and freshness).
 """
-import sys, os, time, json
+import json
+import os
+import sys
+import time
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, 'src')
 if SRC not in sys.path:

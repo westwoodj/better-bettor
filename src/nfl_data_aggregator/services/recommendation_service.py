@@ -1,10 +1,10 @@
-from typing import Optional, List
 import logging
-from ..models import Matchup, FeatureSet, Recommendation, RawModelResponse, Odds
+
 from ..adapters import sportsdata
 from ..clients.google_genai_client import GoogleGenAIClient
 from ..config.config import settings
 from ..db.engine import get_session_factory
+from ..models import FeatureSet, Matchup, Odds, RawModelResponse, Recommendation
 from .data_query_service import DataQueryError, DataQueryService
 
 logger = logging.getLogger(__name__)
@@ -95,7 +95,7 @@ def _features_to_prompt(features: FeatureSet) -> str:
     Keep the prompt deterministic to make parsing easier. This function should
     be iterated on during development to improve model responses.
     """
-    lines: List[str] = []
+    lines: list[str] = []
     m = features.matchup
     lines.append(f"Matchup ID: {m.matchup_id}")
     lines.append(f"Home: {m.home_team}")
@@ -193,7 +193,7 @@ def _parse_model_text(raw_text: str, matchup_id: str) -> Recommendation:
 
 
 class RecommendationService:
-    def __init__(self, client: Optional[GoogleGenAIClient] = None):
+    def __init__(self, client: GoogleGenAIClient | None = None):
         self.client = client or GoogleGenAIClient(api_key=settings.GOOGLE_GENAI_API_KEY, model=settings.GOOGLE_GENAI_MODEL)
 
     def recommend_for_matchup(self, matchup: Matchup) -> RawModelResponse:

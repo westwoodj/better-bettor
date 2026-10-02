@@ -10,13 +10,20 @@ if SRC not in sys.path:
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from nfl_data_aggregator.db.sa_models import Base, Player, Game, PlayerGameStats, Prediction
-from nfl_data_aggregator.db.repository import PlayerRepo, GameRepo, StatsRepo, PredictionRepo
 from nfl_data_aggregator.api.app import create_app, get_db
+from nfl_data_aggregator.db.repository import (
+    GameRepo,
+    PlayerRepo,
+    PredictionRepo,
+    StatsRepo,
+)
+from nfl_data_aggregator.db.sa_models import (
+    Base,
+)
 
 
 @pytest.fixture

@@ -1,6 +1,8 @@
 """Tests for context assembler (pipeline Stage 1)."""
 
-import os, sys
+import os
+import sys
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
