@@ -1,0 +1,37 @@
+[project]
+name = "nfl-data-aggregator"
+version = "0.1.0"
+description = "Gridiron Oracle NFL data aggregation, projections, and MCP server"
+requires-python = ">=3.14"
+dependencies = [
+    "google-genai",
+    "pandas",
+    "sqlalchemy>=2.0",
+    "alembic",
+    "nfl-data-py==0.3.2",
+    "dspy-ai",
+    "anthropic",
+    "openai",
+    "pydantic>=2.0",
+    "pydantic-settings",
+    "requests",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-dotenv",
+    "mcp>=1.0,<2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "coverage",
+]
+
+[tool.uv]
+# Application, not a distributable package: run with PYTHONPATH=src.
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]

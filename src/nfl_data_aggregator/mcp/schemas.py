@@ -118,6 +118,12 @@ class RosterResult(BaseModel):
     refresh: RefreshMetadata = Field(default_factory=RefreshMetadata)
 
 
+class HealthResult(BaseModel):
+    status: str
+    database: str
+    detail: Optional[str] = None
+
+
 class CacheStatusResult(BaseModel):
     database: dict[str, str]
     record_counts: dict[str, int]

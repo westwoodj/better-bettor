@@ -25,7 +25,7 @@ Notes:
 - Keep `.secrets` out of version control. Add `.secrets` to `.gitignore` (already done in this repo).
 
 Build a pre-cached CI Docker image (optional, speeds up `act` runs)
-A prebuilt image contains Python, pipenv, the project dependencies from `Pipfile.lock`, and dev tools (pytest, ruff, coverage). Build it once and reuse it for fast `act` runs.
+A prebuilt image contains Python, uv, the project dependencies from `uv.lock`, and dev tools (pytest, ruff, coverage). Build it once and reuse it for fast `act` runs.
 
 From the repo root run:
 
@@ -68,7 +68,7 @@ Faster iteration tips
 
 Troubleshooting
 - Docker must be running and accessible. If `act` fails to create containers, check Docker Desktop or run `docker ps`.
-- If pipenv install fails in the Dockerfile, check network access or the `Pipfile.lock` consistency.
+- If `uv sync` fails in the Dockerfile, check network access or the `uv.lock` consistency.
 - If Codecov upload fails locally, keep `CODECOV_TOKEN` empty in `.secrets` to skip that step in our workflow.
 
 If you'd like, I can also add a small `Makefile` target to build the Docker image and run `act` with the correct flags. Let me know and I'll add it.

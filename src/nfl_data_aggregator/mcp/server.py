@@ -6,12 +6,14 @@ from collections.abc import Callable
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from sqlalchemy import text
 
 from ..db.engine import get_session_factory, init_db
 from .schemas import (
     CacheStatusResult,
     GameContextResult,
     GamesResult,
+    HealthResult,
     PlayerPerformancesResult,
     PlayerSearchResult,
     RosterResult,
@@ -38,6 +40,22 @@ def _execute(operation: Callable[[DataQueryService], Any]) -> Any:
         return operation(DataQueryService(session))
     except DataQueryError as exc:
         raise ValueError(str(exc)) from None
+    finally:
+        session.close()
+
+
+@mcp.tool()
+def health() -> HealthResult:
+    """Liveness check: confirms the server is up and the database is reachable."""
+    session = get_session_factory()()
+    try:
+        session.execute(text("SELECT 1"))
+        return HealthResult(status="ok", database="ok")
+    except Exception as exc:
+        logger.warning("Health check database failure: %s", exc)
+        return HealthResult(
+            status="degraded", database="error", detail=type(exc).__name__
+        )
     finally:
         session.close()
 
