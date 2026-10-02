@@ -34,3 +34,4 @@ Desktop.ini
 
 # Ignore local data files
 src/data/espn/football/*
+**/__pycache__/
