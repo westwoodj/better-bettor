@@ -1,0 +1,96 @@
+{
+  "items": [
+    {
+      "name": "Base 4-3 D",
+      "positions": {
+        "mlb": {
+          "position": {
+            "abbreviation": "MLB",
+            "displayName": "MLB"
+          },
+          "athletes": [
+            {
+              "slot": 1,
+              "rank": 1,
+              "athlete": {
+                "id": "3002",
+                "fullName": "A Linebacker",
+                "displayName": "A Linebacker"
+              }
+            },
+            {
+              "slot": 1,
+              "rank": 2,
+              "athlete": {
+                "id": "3003",
+                "fullName": "B Linebacker",
+                "displayName": "B Linebacker"
+              }
+            },
+            {
+              "slot": 1,
+              "rank": 3,
+              "athlete": {
+                "id": "3004",
+                "fullName": "C Linebacker",
+                "displayName": "C Linebacker"
+              }
+            }
+          ]
+        },
+        "lde": {
+          "position": {
+            "abbreviation": "LDE",
+            "displayName": "LDE"
+          },
+          "athletes": [
+            {
+              "slot": 1,
+              "rank": 1,
+              "athlete": {
+                "id": "3002",
+                "fullName": "D End",
+                "displayName": "D End"
+              }
+            },
+            {
+              "slot": 1,
+              "rank": 2,
+              "athlete": {
+                "id": "3003",
+                "fullName": "E End",
+                "displayName": "E End"
+              }
+            }
+          ]
+        },
+        "rde": {
+          "position": {
+            "abbreviation": "RDE",
+            "displayName": "RDE"
+          },
+          "athletes": [
+            {
+              "slot": 1,
+              "rank": 1,
+              "athlete": {
+                "id": "3004",
+                "fullName": "F End",
+                "displayName": "F End"
+              }
+            },
+            {
+              "slot": 1,
+              "rank": 2,
+              "athlete": {
+                "id": "3005",
+                "fullName": "G End",
+                "displayName": "G End"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
