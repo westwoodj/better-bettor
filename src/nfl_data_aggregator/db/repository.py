@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from .sa_models import (
     Player, Game, PlayerGameStats, PropLine, Prediction, DefenseProfile,
+    OddsEvent, OddsSnapshot, OddsLine,
 )
 
 
@@ -132,6 +133,63 @@ class PropLineRepo:
         stmt = select(PropLine).where(PropLine.player_id == player_id)
         return list(self.session.execute(stmt).scalars().all())
 
+
+class OddsRepo:
+    def __init__(self, session: Session):
+        self.session = session
+
+    def upsert_event(self, event_id: str, **kwargs) -> OddsEvent:
+        event = self.session.get(OddsEvent, event_id)
+        if event is None:
+            event = OddsEvent(event_id=event_id, **kwargs)
+            self.session.add(event)
+        else:
+            for key, value in kwargs.items():
+                if value is not None:
+                    setattr(event, key, value)
+            event.updated_at = datetime.now(timezone.utc)
+        return event
+
+    def get_event(self, event_id: str) -> Optional[OddsEvent]:
+        return self.session.get(OddsEvent, event_id)
+
+    def list_events(
+        self,
+        sport_key: str,
+        *,
+        commence_from: datetime | None = None,
+        commence_to: datetime | None = None,
+        limit: int = 100,
+    ) -> list[OddsEvent]:
+        stmt = select(OddsEvent).where(OddsEvent.sport_key == sport_key)
+        if commence_from is not None:
+            stmt = stmt.where(OddsEvent.commence_time >= commence_from)
+        if commence_to is not None:
+            stmt = stmt.where(OddsEvent.commence_time <= commence_to)
+        stmt = stmt.order_by(OddsEvent.commence_time.asc(), OddsEvent.event_id.asc()).limit(limit)
+        return list(self.session.scalars(stmt).all())
+
+    def latest_snapshot(self, event_id: str, request_signature: str) -> Optional[OddsSnapshot]:
+        stmt = (
+            select(OddsSnapshot)
+            .where(
+                OddsSnapshot.event_id == event_id,
+                OddsSnapshot.request_signature == request_signature,
+            )
+            .order_by(OddsSnapshot.fetched_at.desc(), OddsSnapshot.id.desc())
+            .limit(1)
+        )
+        return self.session.scalar(stmt)
+
+    def add_snapshot(self, **kwargs) -> OddsSnapshot:
+        snapshot = OddsSnapshot(**kwargs)
+        self.session.add(snapshot)
+        return snapshot
+
+    def add_line(self, **kwargs) -> OddsLine:
+        line = OddsLine(**kwargs)
+        self.session.add(line)
+        return line
 
 class PredictionRepo:
     def __init__(self, session: Session):

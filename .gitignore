@@ -28,3 +28,6 @@ Desktop.ini
 
 # Ignore secrets
 .secrets
+
+# Ignore local data files
+src/data/espn/football/*

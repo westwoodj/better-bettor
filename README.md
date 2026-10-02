@@ -143,9 +143,9 @@ This script ingests data from ESPN, runs the prediction pipeline for key players
 ## Running the MCP Server
 
 The local MCP server gives agents typed access to the verified database over
-stdio. Cached reads never call ESPN. A tool only performs network I/O when its
-`force` argument is explicitly set to `true`; successful refreshes are written
-to the database before the tool returns.
+stdio. Cached NFL-data reads never call ESPN unless `force=true`. Odds tools use
+their configured cache TTL and may automatically fetch an expired or missing
+snapshot; successful refreshes are written before the tool returns.
 
 ```bash
 PYTHONPATH=src pipenv run python -m nfl_data_aggregator.mcp.server
@@ -176,11 +176,22 @@ Available tools:
 | `list_games` | Reads schedules and outcomes | Requires `week`; refreshes that bounded league week |
 | `get_game_context` | Reads outcome, venue/location, weather, and defenses | Refreshes one ESPN event |
 | `get_roster` | Reads QB/RB/WR/TE/K by default | Refreshes one team; `include_all_positions=true` stores the full roster |
+| `list_odds_events` | Lists persisted events and refreshes stale discovery data | Forces a free Odds API event discovery call |
+| `get_betting_lines` | Returns a matching snapshot younger than the configured TTL | Always fetches and stores a new immutable snapshot |
+| `get_betting_line_history` | Queries stored snapshots with market/book/participant/time filters | Not applicable; history is database-only |
 
 Forced refreshes fail and roll back as a unit when ESPN is unavailable. They do
 not silently return stale data. `DATABASE_URL` selects the same database used by
 the REST API; for example, set it to `sqlite:///gridiron_oracle_superbowl.db` to
 query the populated Super Bowl database.
+
+Odds reads use a 15-minute TTL by default. An expired read fetches the requested
+event markets and stores every bookmaker outcome as a new snapshot. If that
+automatic refresh fails, the newest matching snapshot is returned with a stale
+warning; `force=true` always surfaces the upstream error. NFL defaults include
+game lines and non-alternate offensive player props. Other sports default to
+moneyline, spread, and total markets; pass explicit `market_keys` for additional
+markets. Use either `regions` or `bookmakers`, not both.
 
 To populate the DB-first roster endpoint with current skill-position players for all NFL teams:
 
@@ -205,6 +216,8 @@ All configuration is via environment variables (or a `.env` file):
 | `DSPY_TEMPERATURE_PREDICTION` | `0.1` | Temperature for prediction generation |
 | `NFL_SEASON` | `2025` | NFL season year |
 | `ODDS_API_KEY` | — | The Odds API key |
+| `ODDS_API_REGIONS` | `us` | Comma-separated default Odds API regions |
+| `ODDS_CACHE_TTL_SECONDS` | `900` | Maximum age of a matching odds snapshot before automatic refresh |
 | `SPORTS_DATA_API_KEY` | — | SportsData.IO API key |
 | `GOOGLE_GENAI_API_KEY` | — | Google GenAI API key |
 | `API_HOST` | `0.0.0.0` | API server bind host |

@@ -1,6 +1,7 @@
 """Tests for SQLAlchemy ORM models."""
 
 import os, sys
+from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
@@ -8,13 +9,17 @@ if SRC not in sys.path:
 
 from nfl_data_aggregator.db.sa_models import (
     Base, Player, Game, PlayerGameStats, PropLine, Prediction, DefenseProfile,
+    OddsEvent, OddsSnapshot, OddsLine,
 )
 
 
 def test_all_tables_created(engine):
     """Verify all expected tables are created."""
     tables = Base.metadata.tables.keys()
-    expected = {"players", "games", "player_game_stats", "prop_lines", "predictions", "defense_profiles"}
+    expected = {
+        "players", "games", "player_game_stats", "prop_lines", "predictions",
+        "defense_profiles", "odds_events", "odds_snapshots", "odds_lines",
+    }
     assert expected.issubset(tables)
 
 
@@ -111,3 +116,42 @@ def test_relationships(session):
     assert len(player.game_stats) == 1
     assert player.game_stats[0].pass_yards == 250
     assert len(game.game_stats) == 1
+
+
+def test_odds_snapshot_preserves_repeated_fetches(session):
+    event = OddsEvent(
+        event_id="event-1",
+        sport_key="americanfootball_nfl",
+        commence_time=datetime(2026, 9, 20, 17, 0, tzinfo=timezone.utc),
+        home_team="Kansas City Chiefs",
+        away_team="Buffalo Bills",
+    )
+    session.add(event)
+    session.flush()
+    first = OddsSnapshot(
+        event_id=event.event_id,
+        request_signature="same",
+        requested_markets=["h2h"],
+        outcome_count=1,
+    )
+    second = OddsSnapshot(
+        event_id=event.event_id,
+        request_signature="same",
+        requested_markets=["h2h"],
+        outcome_count=1,
+    )
+    session.add_all([first, second])
+    session.flush()
+    session.add_all([
+        OddsLine(
+            snapshot_id=first.id, bookmaker_key="book", market_key="h2h",
+            outcome_name="Kansas City Chiefs", price=-110,
+        ),
+        OddsLine(
+            snapshot_id=second.id, bookmaker_key="book", market_key="h2h",
+            outcome_name="Kansas City Chiefs", price=-110,
+        ),
+    ])
+    session.commit()
+    assert first.id != second.id
+    assert len(event.snapshots) == 2

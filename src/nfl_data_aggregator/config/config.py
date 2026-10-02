@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     # Example adapters keys (placeholders)
     SPORTS_DATA_API_KEY: Optional[str] = os.environ.get("SPORTS_DATA_API_KEY")
     ODDS_API_KEY: Optional[str] = os.environ.get("ODDS_API_KEY")
+    ODDS_API_REGIONS: str = os.environ.get("ODDS_API_REGIONS", "us")
+    ODDS_CACHE_TTL_SECONDS: int = int(os.environ.get("ODDS_CACHE_TTL_SECONDS", "900"))
 
     # Database
     DATABASE_URL: str = os.environ.get("DATABASE_URL", "sqlite:///gridiron_oracle.db")

@@ -1,9 +1,11 @@
 from typing import Optional, List
 import logging
-from ..models import Matchup, FeatureSet, Recommendation, RawModelResponse
-from ..adapters import sportsdata, odds_api
+from ..models import Matchup, FeatureSet, Recommendation, RawModelResponse, Odds
+from ..adapters import sportsdata
 from ..clients.google_genai_client import GoogleGenAIClient
 from ..config.config import settings
+from ..db.engine import get_session_factory
+from .data_query_service import DataQueryError, DataQueryService
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +20,18 @@ def build_features(matchup: Matchup) -> FeatureSet:
     home_stats = sportsdata.fetch_team_stats(matchup.home_team)
     away_stats = sportsdata.fetch_team_stats(matchup.away_team)
     injured = sportsdata.fetch_injured_players(matchup.home_team) + sportsdata.fetch_injured_players(matchup.away_team)
-    market_odds = odds_api.fetch_current_odds(matchup.matchup_id)
+    factory = get_session_factory()
+    session = factory()
+    try:
+        stored = DataQueryService(session).get_betting_lines(
+            "americanfootball_nfl", matchup.matchup_id
+        )
+        market_odds = _legacy_odds(stored)
+    except DataQueryError as exc:
+        logger.warning("Odds unavailable for %s: %s", matchup.matchup_id, exc)
+        market_odds = []
+    finally:
+        session.close()
 
     features = FeatureSet(
         matchup=matchup,
@@ -28,6 +41,52 @@ def build_features(matchup: Matchup) -> FeatureSet:
         market_odds=market_odds,
     )
     return features
+
+
+def _legacy_odds(result) -> list[Odds]:
+    """Project a persisted snapshot into the scaffold's legacy game-odds model."""
+    values: list[Odds] = []
+    for bookmaker in result.snapshot.bookmakers:
+        spread = favorite = home_ml = away_ml = total = None
+        player_props = []
+        for market in bookmaker.markets:
+            if market.market_key == "spreads":
+                favored = next((item for item in market.outcomes if (item.point or 0) < 0), None)
+                if favored:
+                    spread, favorite = abs(favored.point), favored.name
+            elif market.market_key == "h2h":
+                for item in market.outcomes:
+                    if item.name == result.event.home_team:
+                        home_ml = item.price
+                    elif item.name == result.event.away_team:
+                        away_ml = item.price
+            elif market.market_key == "totals":
+                over = next((item for item in market.outcomes if item.name.lower() == "over"), None)
+                total = over.point if over else None
+            elif market.market_key.startswith("player_"):
+                player_props.extend(
+                    {
+                        "market_key": market.market_key,
+                        "player_name": item.participant,
+                        "line": item.point,
+                        "direction": item.name.lower(),
+                        "price": item.price,
+                    }
+                    for item in market.outcomes
+                )
+        values.append(
+            Odds(
+                provider=bookmaker.bookmaker_title or bookmaker.bookmaker_key,
+                spread=spread,
+                spread_favorite=favorite,
+                moneyline_home=home_ml,
+                moneyline_away=away_ml,
+                total=total,
+                last_updated=result.snapshot.fetched_at,
+                player_props=player_props or None,
+            )
+        )
+    return values
 
 
 def _features_to_prompt(features: FeatureSet) -> str:
