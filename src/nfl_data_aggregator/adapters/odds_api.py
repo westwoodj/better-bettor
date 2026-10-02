@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any
@@ -9,6 +10,8 @@ from typing import Any
 import requests
 
 from ..config.config import settings
+
+logger = logging.getLogger(__name__)
 
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 
@@ -70,7 +73,9 @@ def normalize_values(values: Iterable[str] | str | None) -> list[str]:
         return []
     if isinstance(values, str):
         values = values.split(",")
-    return sorted({str(value).strip().lower() for value in values if str(value).strip()})
+    return sorted(
+        {str(value).strip().lower() for value in values if str(value).strip()}
+    )
 
 
 class OddsAPIClient:
@@ -104,7 +109,9 @@ class OddsAPIClient:
             params["commenceTimeTo"] = commence_time_to
         if isinstance(event_ids, str):
             event_ids = event_ids.split(",")
-        ids = sorted({str(value).strip() for value in (event_ids or []) if str(value).strip()})
+        ids = sorted(
+            {str(value).strip() for value in (event_ids or []) if str(value).strip()}
+        )
         if ids:
             params["eventIds"] = ",".join(ids)
         return self._get(f"/sports/{sport_key}/events", params)
@@ -134,7 +141,9 @@ class OddsAPIClient:
         if bookmaker_values:
             params["bookmakers"] = ",".join(bookmaker_values)
         else:
-            params["regions"] = ",".join(region_values or normalize_values(settings.ODDS_API_REGIONS))
+            params["regions"] = ",".join(
+                region_values or normalize_values(settings.ODDS_API_REGIONS)
+            )
         return self._get(f"/sports/{sport_key}/events/{event_id}/odds", params)
 
     def _get(self, path: str, params: dict[str, Any]) -> OddsAPIResponse:
@@ -175,7 +184,7 @@ def _quota_headers(headers: Any) -> dict[str, int | None]:
 def _optional_int(value: Any) -> int | None:
     try:
         return int(value) if value is not None else None
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return None
 
 
@@ -185,5 +194,5 @@ def _response_detail(response: Any) -> str:
         if isinstance(payload, dict):
             return str(payload.get("message") or payload.get("error") or payload)[:300]
     except Exception:
-        pass
+        logger.debug("Ignoring recoverable error", exc_info=True)
     return str(getattr(response, "text", "upstream error"))[:300]

@@ -31,6 +31,7 @@ class PredictionService:
         """Initialize DSPy on first use."""
         if not self._dspy_initialized:
             from ..clients.dspy_client import init_dspy
+
             init_dspy(
                 provider=settings.DSPY_LM_PROVIDER,
                 model=settings.DSPY_MODEL,
@@ -64,7 +65,9 @@ class PredictionService:
         except Exception:
             # Preserve the existing prediction degradation behavior if ESPN is
             # temporarily unavailable; context assembly will expose any gaps.
-            logger.exception("Failed to ensure historical ESPN data for game %s", game_id)
+            logger.exception(
+                "Failed to ensure historical ESPN data for game %s", game_id
+            )
             return {"game_id": game_id, "weeks_ingested": [], "error": True}
 
     def predict_player_by_name(
@@ -86,10 +89,13 @@ class PredictionService:
 
         if game_id is None:
             from ..db.repository import GameRepo
+
             game_repo = GameRepo(self.session)
             games = game_repo.find_by_team(player.team, settings.NFL_SEASON)
             if not games:
-                raise ValueError(f"No games found for team {player.team} in season {settings.NFL_SEASON}")
+                raise ValueError(
+                    f"No games found for team {player.team} in season {settings.NFL_SEASON}"
+                )
             # Pick the latest game
             games.sort(key=lambda g: g.week)
             game_id = games[-1].game_id

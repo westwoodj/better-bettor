@@ -1,6 +1,6 @@
 # Convenience Makefile for local CI/test tasks
 
-.PHONY: ci-image act act-image sync migrate mcp test lint push-ci-image
+.PHONY: ci-image act act-image sync migrate mcp test lint format push-ci-image
 
 # Build the pre-cached CI Docker image used to speed up `act` runs
 ci-image:
@@ -35,6 +35,10 @@ test:
 # Lint using ruff
 lint:
 	uv run ruff check .
+
+# Format using ruff
+format:
+	uv run ruff format .
 
 # Push the CI Docker image to a registry. You must set DOCKER_REPO (e.g. username/repo).
 # Optional env vars:

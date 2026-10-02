@@ -1,9 +1,9 @@
 """Pydantic v2 request/response schemas for the Gridiron Oracle REST API."""
 
-
 from pydantic import BaseModel
 
 # --- Health ---
+
 
 class HealthResponse(BaseModel):
     status: str = "ok"
@@ -13,6 +13,7 @@ class HealthResponse(BaseModel):
 
 
 # --- Players ---
+
 
 class PlayerResponse(BaseModel):
     player_id: str
@@ -28,6 +29,7 @@ class PlayerSearchResponse(BaseModel):
 
 # --- Teams ---
 
+
 class TeamSearchResult(BaseModel):
     id: str
     abbreviation: str
@@ -42,6 +44,7 @@ class TeamSearchResponse(BaseModel):
 
 
 # --- Roster ---
+
 
 class RosterPlayerResponse(BaseModel):
     player_id: str
@@ -62,6 +65,7 @@ class RosterResponse(BaseModel):
 
 # --- Game Search ---
 
+
 class GameSearchResult(BaseModel):
     game_id: str
     season: int
@@ -78,6 +82,7 @@ class GameSearchResponse(BaseModel):
 
 
 # --- Game Context ---
+
 
 class DefenseProfileResponse(BaseModel):
     team: str
@@ -103,6 +108,7 @@ class GameContextResponse(BaseModel):
 
 
 # --- Stats ---
+
 
 class GameStatRow(BaseModel):
     game_id: str
@@ -131,6 +137,7 @@ class PlayerStatsResponse(BaseModel):
 
 
 # --- Predictions ---
+
 
 class StatPredictionSchema(BaseModel):
     stat_name: str
@@ -173,6 +180,7 @@ class BatchPredictionResponse(BaseModel):
 
 # --- Props ---
 
+
 class PropRecommendation(BaseModel):
     market: str
     line: float
@@ -189,6 +197,7 @@ class PropRecommendationsResponse(BaseModel):
 
 
 # --- Errors ---
+
 
 class ErrorResponse(BaseModel):
     detail: str

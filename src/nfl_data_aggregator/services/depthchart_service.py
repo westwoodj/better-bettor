@@ -19,13 +19,24 @@ class DepthChartService:
     def __init__(self, nfl_client: NFLClient | None = None):
         self.nfl = nfl_client or NFLClient()
 
-    def parse_from_file(self, file_path: str, team_id: str | None = None, year: int | None = None, force: bool = False) -> dict[str, Any]:
+    def parse_from_file(
+        self,
+        file_path: str,
+        team_id: str | None = None,
+        year: int | None = None,
+        force: bool = False,
+    ) -> dict[str, Any]:
         p = Path(file_path)
         with p.open("r", encoding="utf-8") as fh:
             import json
 
             data = json.load(fh)
-        return self.parse_depthchart(data=data, team_id=team_id or self._infer_team_id_from_filename(p.stem), year=year or self._infer_year_from_filename(p.stem), force=force)
+        return self.parse_depthchart(
+            data=data,
+            team_id=team_id or self._infer_team_id_from_filename(p.stem),
+            year=year or self._infer_year_from_filename(p.stem),
+            force=force,
+        )
 
     def _infer_team_id_from_filename(self, stem: str) -> str | None:
         # Example filename: '2-2025' -> team_id 2
@@ -42,7 +53,9 @@ class DepthChartService:
         s = re.sub(r"[^0-9A-Za-z_-]", "", s)
         return s
 
-    def parse_depthchart(self, data: dict, team_id: str | None, year: int | None, force: bool = False) -> dict[str, Any]:
+    def parse_depthchart(
+        self, data: dict, team_id: str | None, year: int | None, force: bool = False
+    ) -> dict[str, Any]:
         """Parse depth chart JSON response into DataFrames per schema.
 
         Returns a dict: { 'teamid_schema_year': DataFrame }
@@ -50,7 +63,9 @@ class DepthChartService:
         try:
             import pandas as pd
         except Exception as exc:
-            raise RuntimeError("pandas is required for depth chart parsing; pip install pandas") from exc
+            raise RuntimeError(
+                "pandas is required for depth chart parsing; pip install pandas"
+            ) from exc
 
         items = data.get("items", []) if isinstance(data, dict) else []
         result: dict[str, Any] = {}
@@ -62,7 +77,12 @@ class DepthChartService:
             positions = item.get("positions") or {}
             for pos_key, pos_val in positions.items():
                 pos_info = pos_val.get("position") or {}
-                pos_abbr = pos_info.get("abbreviation") or pos_info.get("displayName") or pos_info.get("name") or pos_key
+                pos_abbr = (
+                    pos_info.get("abbreviation")
+                    or pos_info.get("displayName")
+                    or pos_info.get("name")
+                    or pos_key
+                )
 
                 athletes = pos_val.get("athletes") or []
                 for aentry in athletes:
@@ -88,9 +108,13 @@ class DepthChartService:
                     merged = {"slot": slot, "rank": rank}
                     if athlete_data:
                         # if resolved contains key 'person' or 'athlete', try to unwrap
-                        if "person" in athlete_data and isinstance(athlete_data["person"], dict):
+                        if "person" in athlete_data and isinstance(
+                            athlete_data["person"], dict
+                        ):
                             merged["athlete"] = athlete_data["person"]
-                        elif "athlete" in athlete_data and isinstance(athlete_data["athlete"], dict):
+                        elif "athlete" in athlete_data and isinstance(
+                            athlete_data["athlete"], dict
+                        ):
                             merged["athlete"] = athlete_data["athlete"]
                         else:
                             # assume the resolved dict itself contains name/id
@@ -109,14 +133,19 @@ class DepthChartService:
                 for c in ("slot", "rank"):
                     if c in df.columns:
                         df[c] = pd.to_numeric(df[c], errors="coerce")
-                df.sort_values(by=["position", "slot", "rank"], inplace=True, na_position="last")
+                df.sort_values(
+                    by=["position", "slot", "rank"], inplace=True, na_position="last"
+                )
                 # reset index
                 df.reset_index(drop=True, inplace=True)
             else:
                 df = pd.DataFrame()
 
-            key = f"{team_id}_{sanitized}_{year}" if team_id and year else f"{sanitized}_{year or 'unknown'}"
+            key = (
+                f"{team_id}_{sanitized}_{year}"
+                if team_id and year
+                else f"{sanitized}_{year or 'unknown'}"
+            )
             result[key] = df
 
         return result
-

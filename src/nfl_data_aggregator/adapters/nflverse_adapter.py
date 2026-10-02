@@ -5,6 +5,7 @@ If the library isn't installed, methods return empty results instead of crashing
 """
 
 import logging
+import math
 
 logger = logging.getLogger(__name__)
 
@@ -20,17 +21,22 @@ def _ensure_import():
     _import_attempted = True
     try:
         import nfl_data_py as nfl
+
         _nfl_data_py = nfl
         return True
     except ImportError:
-        logger.warning("nfl_data_py not installed; nflverse adapter will return empty results")
+        logger.warning(
+            "nfl_data_py not installed; nflverse adapter will return empty results"
+        )
         return False
 
 
 class NflverseAdapter:
     """Wraps nfl_data_py with graceful degradation and schema normalization."""
 
-    def import_weekly_data(self, seasons: list[int], columns: list[str] | None = None) -> list[dict]:
+    def import_weekly_data(
+        self, seasons: list[int], columns: list[str] | None = None
+    ) -> list[dict]:
         """Import weekly player stats from nflverse.
 
         Returns list of dicts normalized to our schema.
@@ -66,7 +72,9 @@ class NflverseAdapter:
             logger.exception("Failed to import schedule from nflverse")
             return []
 
-    def get_player_weekly_stats(self, season: int, week: int | None = None) -> list[dict]:
+    def get_player_weekly_stats(
+        self, season: int, week: int | None = None
+    ) -> list[dict]:
         """Get player weekly stats for a specific season, optionally filtered by week."""
         if not _ensure_import():
             return []
@@ -114,7 +122,7 @@ class NflverseAdapter:
                         val = row.get(nfl_col)
                         if hasattr(val, "item"):
                             val = val.item()
-                        if val != val:  # NaN check
+                        if isinstance(val, float) and math.isnan(val):
                             val = None
                         record[our_col] = val
                 records.append(record)
@@ -174,7 +182,7 @@ def _safe_int(val) -> int | None:
     try:
         v = int(val)
         return v
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -184,9 +192,9 @@ def _build_weather(row) -> dict | None:
     if temp is None and wind is None:
         return None
     weather = {}
-    if temp is not None and temp == temp:  # NaN check
+    if temp is not None and not math.isnan(temp):  # NaN check
         weather["temp"] = temp
-    if wind is not None and wind == wind:
+    if wind is not None and not math.isnan(wind):
         weather["wind"] = wind
     return weather or None
 
@@ -197,6 +205,6 @@ def _build_score(row) -> str | None:
     if home is not None and away is not None:
         try:
             return f"{int(home)}-{int(away)}"
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             pass
     return None

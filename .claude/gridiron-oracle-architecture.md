@@ -369,9 +369,7 @@ def prediction_accuracy(example, prediction, trace=None):
     stat_score = mean_absolute_percentage_error(
         example.actual_stats, prediction.predicted_stats
     )
-    prop_score = prop_bet_accuracy(
-        example.actual_stats, prediction.recommendations
-    )
+    prop_score = prop_bet_accuracy(example.actual_stats, prediction.recommendations)
     # Penalize low-confidence correct predictions less than
     # high-confidence wrong predictions
     confidence_calibration = calibration_penalty(
@@ -541,12 +539,13 @@ class PlayerPrediction(BaseModel):
     data_references: list[str]  # Must cite specific data points used
     risk_factors: list[str]
 
+
 class StatPrediction(BaseModel):
     prediction: float
     floor: float
     ceiling: float
 
-    @validator('prediction')
+    @validator("prediction")
     def prediction_within_range(cls, v, values):
         # Sanity bounds — e.g., no QB throws for 900 yards
         assert 0 <= v <= 800, "Prediction outside plausible range"

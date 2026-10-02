@@ -19,7 +19,9 @@ def build_features(matchup: Matchup) -> FeatureSet:
     """
     home_stats = sportsdata.fetch_team_stats(matchup.home_team)
     away_stats = sportsdata.fetch_team_stats(matchup.away_team)
-    injured = sportsdata.fetch_injured_players(matchup.home_team) + sportsdata.fetch_injured_players(matchup.away_team)
+    injured = sportsdata.fetch_injured_players(
+        matchup.home_team
+    ) + sportsdata.fetch_injured_players(matchup.away_team)
     factory = get_session_factory()
     session = factory()
     try:
@@ -51,7 +53,9 @@ def _legacy_odds(result) -> list[Odds]:
         player_props = []
         for market in bookmaker.markets:
             if market.market_key == "spreads":
-                favored = next((item for item in market.outcomes if (item.point or 0) < 0), None)
+                favored = next(
+                    (item for item in market.outcomes if (item.point or 0) < 0), None
+                )
                 if favored:
                     spread, favorite = abs(favored.point), favored.name
             elif market.market_key == "h2h":
@@ -61,7 +65,10 @@ def _legacy_odds(result) -> list[Odds]:
                     elif item.name == result.event.away_team:
                         away_ml = item.price
             elif market.market_key == "totals":
-                over = next((item for item in market.outcomes if item.name.lower() == "over"), None)
+                over = next(
+                    (item for item in market.outcomes if item.name.lower() == "over"),
+                    None,
+                )
                 total = over.point if over else None
             elif market.market_key.startswith("player_"):
                 player_props.extend(
@@ -103,8 +110,12 @@ def _features_to_prompt(features: FeatureSet) -> str:
     lines.append("")
     hs = features.home_team_stats
     as_ = features.away_team_stats
-    lines.append(f"Home team stats: wins={hs.wins}, points_for={hs.points_for}, defensive_rating={hs.defensive_rating}")
-    lines.append(f"Away team stats: wins={as_.wins}, points_for={as_.points_for}, defensive_rating={as_.defensive_rating}")
+    lines.append(
+        f"Home team stats: wins={hs.wins}, points_for={hs.points_for}, defensive_rating={hs.defensive_rating}"
+    )
+    lines.append(
+        f"Away team stats: wins={as_.wins}, points_for={as_.points_for}, defensive_rating={as_.defensive_rating}"
+    )
     lines.append("")
     if features.injured_players:
         lines.append("Injuries:")
@@ -115,10 +126,14 @@ def _features_to_prompt(features: FeatureSet) -> str:
     if features.market_odds:
         lines.append("Market odds:")
         for o in features.market_odds:
-            lines.append(f" - provider={o.provider} spread={o.spread} favorite={o.spread_favorite} ml_home={o.moneyline_home} total={o.total}")
+            lines.append(
+                f" - provider={o.provider} spread={o.spread} favorite={o.spread_favorite} ml_home={o.moneyline_home} total={o.total}"
+            )
         lines.append("")
 
-    lines.append("Please provide a recommendation for: best spread, best moneyline, best total, and 1-3 player props. Include a short rationale and return results in a simple bullet list with labels.")
+    lines.append(
+        "Please provide a recommendation for: best spread, best moneyline, best total, and 1-3 player props. Include a short rationale and return results in a simple bullet list with labels."
+    )
     return "\n".join(lines)
 
 
@@ -141,7 +156,7 @@ def _parse_model_text(raw_text: str, matchup_id: str) -> Recommendation:
         if not line:
             continue
         low = line.lower()
-        if low.startswith("- spread:") or low.startswith("spread:"):
+        if low.startswith(("- spread:", "spread:")):
             # e.g. "- Spread: Home -3.5"
             try:
                 parts = line.split(":", 1)[1].strip().split()
@@ -149,8 +164,9 @@ def _parse_model_text(raw_text: str, matchup_id: str) -> Recommendation:
                     best_spread_side = parts[0]
                     best_spread = float(parts[1].lstrip("+-"))
             except Exception:
+                logger.debug("Ignoring recoverable error", exc_info=True)
                 continue
-        elif low.startswith("- moneyline:") or low.startswith("moneyline:"):
+        elif low.startswith(("- moneyline:", "moneyline:")):
             # e.g. "- Moneyline: Home -180"
             try:
                 parts = line.split(":", 1)[1].strip().split()
@@ -158,21 +174,24 @@ def _parse_model_text(raw_text: str, matchup_id: str) -> Recommendation:
                     # prefer which side
                     best_moneyline = parts[0] + " " + parts[1]
             except Exception:
+                logger.debug("Ignoring recoverable error", exc_info=True)
                 continue
-        elif low.startswith("- total:") or low.startswith("total:"):
+        elif low.startswith(("- total:", "total:")):
             # e.g. "- Total: 44.5 (Over)"
             try:
                 inner = line.split(":", 1)[1].strip().split()[0]
                 best_total = float(inner.strip().strip("()"))
             except Exception:
+                logger.debug("Ignoring recoverable error", exc_info=True)
                 continue
-        elif low.startswith("- player props:") or low.startswith("player props:"):
+        elif low.startswith(("- player props:", "player props:")):
             # following lines may include props, but for simplicity try to parse inline
             try:
                 parts = line.split(":", 1)[1].strip()
                 if parts:
                     player_props.append({"text": parts})
             except Exception:
+                logger.debug("Ignoring recoverable error", exc_info=True)
                 continue
         else:
             # collect lines for rationale if they look like rationale
@@ -194,15 +213,19 @@ def _parse_model_text(raw_text: str, matchup_id: str) -> Recommendation:
 
 class RecommendationService:
     def __init__(self, client: GoogleGenAIClient | None = None):
-        self.client = client or GoogleGenAIClient(api_key=settings.GOOGLE_GENAI_API_KEY, model=settings.GOOGLE_GENAI_MODEL)
+        self.client = client or GoogleGenAIClient(
+            api_key=settings.GOOGLE_GENAI_API_KEY, model=settings.GOOGLE_GENAI_MODEL
+        )
 
     def recommend_for_matchup(self, matchup: Matchup) -> RawModelResponse:
         features = build_features(matchup)
         prompt = _features_to_prompt(features)
-        resp = self.client.generate_text(prompt=prompt, temperature=0.0, max_output_tokens=512)
+        resp = self.client.generate_text(
+            prompt=prompt, temperature=0.0, max_output_tokens=512
+        )
         raw = resp.get("raw_text", "")
         try:
             parsed = _parse_model_text(raw, matchup.matchup_id)
-        except Exception:
+        except Exception:  # noqa: BLE001
             parsed = None
         return RawModelResponse(raw_text=raw, parsed=parsed)

@@ -13,16 +13,18 @@ from .context_models import PredictionContext
 @dataclass
 class NumericClaim:
     """A numeric claim extracted from reasoning text."""
-    stat_type: str      # e.g., "pass_yards", "rush_tds"
+
+    stat_type: str  # e.g., "pass_yards", "rush_tds"
     value: float
-    claim_text: str     # The original matched text
-    claim_type: str     # "average", "specific_week", "total", "general"
+    claim_text: str  # The original matched text
+    claim_type: str  # "average", "specific_week", "total", "general"
     week: int | None = None
 
 
 @dataclass
 class Violation:
     """A detected hallucination or implausibility."""
+
     claim: NumericClaim
     reason: str
     severity: str = "warning"  # "warning" or "error"
@@ -31,6 +33,7 @@ class Violation:
 @dataclass
 class HallucinationResult:
     """Result of a hallucination check."""
+
     passed: bool
     violations: list[Violation] = field(default_factory=list)
     prediction_sanity: dict = field(default_factory=dict)
@@ -64,12 +67,10 @@ _CLAIM_PATTERNS = [
     (r"averag\w*\s+(\d+\.?\d*)\s+(passing|pass)\s+t(?:ouch)?d", "pass_tds", "average"),
     (r"averag\w*\s+(\d+\.?\d*)\s+(rushing|rush)\s+t(?:ouch)?d", "rush_tds", "average"),
     (r"averag\w*\s+(\d+\.?\d*)\s+fantasy\s+points?", "fantasy_points", "average"),
-
     # "265 passing yards per game"
     (r"(\d+\.?\d*)\s+(passing|pass)\s+yards?\s+per\s+game", "pass_yards", "average"),
     (r"(\d+\.?\d*)\s+(rushing|rush)\s+yards?\s+per\s+game", "rush_yards", "average"),
     (r"(\d+\.?\d*)\s+(receiving)\s+yards?\s+per\s+game", "receiving_yards", "average"),
-
     # "threw for 300 yards" / "rushed for 150 yards"
     (r"threw\s+for\s+(\d+)\s+yards?", "pass_yards", "general"),
     (r"rushed\s+for\s+(\d+)\s+yards?", "rush_yards", "general"),
@@ -82,11 +83,14 @@ _CLAIM_PATTERNS = [
     (r"(\d+)\s+receiving\s+t(?:ouch)?d", "receiving_tds", "general"),
     (r"(\d+)\s+receptions?", "receptions", "general"),
     (r"(\d+)\s+targets?", "targets", "general"),
-
     # "in week 5, had 280 yards"
     (r"week\s+(\d+).*?(\d+)\s+(passing|pass)\s+yards?", "pass_yards", "specific_week"),
     (r"week\s+(\d+).*?(\d+)\s+(rushing|rush)\s+yards?", "rush_yards", "specific_week"),
-    (r"week\s+(\d+).*?(\d+)\s+(receiving)\s+yards?", "receiving_yards", "specific_week"),
+    (
+        r"week\s+(\d+).*?(\d+)\s+(receiving)\s+yards?",
+        "receiving_yards",
+        "specific_week",
+    ),
 ]
 
 
@@ -104,25 +108,31 @@ class HallucinationChecker:
                 if claim_type == "specific_week":
                     week = int(groups[0])
                     value = float(groups[1])
-                    claims.append(NumericClaim(
-                        stat_type=stat_type,
-                        value=value,
-                        claim_text=match.group(0),
-                        claim_type="specific_week",
-                        week=week,
-                    ))
+                    claims.append(
+                        NumericClaim(
+                            stat_type=stat_type,
+                            value=value,
+                            claim_text=match.group(0),
+                            claim_type="specific_week",
+                            week=week,
+                        )
+                    )
                 else:
                     value = float(groups[0])
-                    claims.append(NumericClaim(
-                        stat_type=stat_type,
-                        value=value,
-                        claim_text=match.group(0),
-                        claim_type=claim_type,
-                    ))
+                    claims.append(
+                        NumericClaim(
+                            stat_type=stat_type,
+                            value=value,
+                            claim_text=match.group(0),
+                            claim_type=claim_type,
+                        )
+                    )
 
         return claims
 
-    def verify_claims(self, claims: list[NumericClaim], context: PredictionContext) -> list[Violation]:
+    def verify_claims(
+        self, claims: list[NumericClaim], context: PredictionContext
+    ) -> list[Violation]:
         """Verify extracted claims against source data."""
         violations = []
 
@@ -131,23 +141,30 @@ class HallucinationChecker:
             if claim.stat_type in PLAUSIBLE_RANGES:
                 lo, hi = PLAUSIBLE_RANGES[claim.stat_type]
                 if claim.value < lo or claim.value > hi:
-                    violations.append(Violation(
-                        claim=claim,
-                        reason=f"Value {claim.value} outside plausible range [{lo}, {hi}] for {claim.stat_type}",
-                        severity="error",
-                    ))
+                    violations.append(
+                        Violation(
+                            claim=claim,
+                            reason=f"Value {claim.value} outside plausible range [{lo}, {hi}] for {claim.stat_type}",
+                            severity="error",
+                        )
+                    )
 
             # Verify claimed averages against actual
-            if claim.claim_type == "average" and context.season_averages.games_played > 0:
+            if (
+                claim.claim_type == "average"
+                and context.season_averages.games_played > 0
+            ):
                 actual_avg = self._get_actual_average(claim.stat_type, context)
                 if actual_avg is not None:
                     tolerance = max(actual_avg * 0.10, 5.0)  # 10% or at least 5
                     if abs(claim.value - actual_avg) > tolerance:
-                        violations.append(Violation(
-                            claim=claim,
-                            reason=f"Claimed average {claim.value} for {claim.stat_type} differs from actual {actual_avg:.1f} (tolerance: {tolerance:.1f})",
-                            severity="error",
-                        ))
+                        violations.append(
+                            Violation(
+                                claim=claim,
+                                reason=f"Claimed average {claim.value} for {claim.stat_type} differs from actual {actual_avg:.1f} (tolerance: {tolerance:.1f})",
+                                severity="error",
+                            )
+                        )
 
             # Verify specific week references
             if claim.claim_type == "specific_week" and claim.week is not None:
@@ -155,11 +172,13 @@ class HallucinationChecker:
                 if actual_value is not None:
                     tolerance = max(abs(actual_value) * 0.05, 1.0)  # 5% or 1
                     if abs(claim.value - actual_value) > tolerance:
-                        violations.append(Violation(
-                            claim=claim,
-                            reason=f"Claimed {claim.stat_type}={claim.value} in week {claim.week} but actual was {actual_value}",
-                            severity="error",
-                        ))
+                        violations.append(
+                            Violation(
+                                claim=claim,
+                                reason=f"Claimed {claim.stat_type}={claim.value} in week {claim.week} but actual was {actual_value}",
+                                severity="error",
+                            )
+                        )
 
         return violations
 
@@ -189,12 +208,16 @@ class HallucinationChecker:
             stat_sanity = {"valid": True, "issues": []}
 
             # Floor <= expected <= ceiling
-            if floor is not None and expected is not None and ceiling is not None:
-                if not (floor <= expected <= ceiling):
-                    stat_sanity["valid"] = False
-                    stat_sanity["issues"].append(
-                        f"floor ({floor}) <= expected ({expected}) <= ceiling ({ceiling}) violated"
-                    )
+            if (
+                floor is not None
+                and expected is not None
+                and ceiling is not None
+                and not (floor <= expected <= ceiling)
+            ):
+                stat_sanity["valid"] = False
+                stat_sanity["issues"].append(
+                    f"floor ({floor}) <= expected ({expected}) <= ceiling ({ceiling}) violated"
+                )
 
             # Expected value within plausible bounds
             if expected is not None and stat_name in PLAUSIBLE_RANGES:
@@ -217,7 +240,9 @@ class HallucinationChecker:
                 lo, hi = PLAUSIBLE_RANGES[stat_name]
                 if ceiling > hi:
                     stat_sanity["valid"] = False
-                    stat_sanity["issues"].append(f"ceiling {ceiling} above maximum {hi}")
+                    stat_sanity["issues"].append(
+                        f"ceiling {ceiling} above maximum {hi}"
+                    )
 
             sanity[stat_name] = stat_sanity
 
@@ -232,7 +257,9 @@ class HallucinationChecker:
             prediction_sanity=sanity,
         )
 
-    def _get_actual_average(self, stat_type: str, context: PredictionContext) -> float | None:
+    def _get_actual_average(
+        self, stat_type: str, context: PredictionContext
+    ) -> float | None:
         """Get actual season average for a stat type from context."""
         avg_map = {
             "pass_yards": context.season_averages.avg_pass_yards,
@@ -246,7 +273,9 @@ class HallucinationChecker:
         }
         return avg_map.get(stat_type)
 
-    def _get_week_stat(self, stat_type: str, week: int, context: PredictionContext) -> float | None:
+    def _get_week_stat(
+        self, stat_type: str, week: int, context: PredictionContext
+    ) -> float | None:
         """Get actual stat for a specific week from context."""
         for game in context.recent_games:
             if game.week == week:

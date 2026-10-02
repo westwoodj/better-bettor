@@ -51,7 +51,9 @@ class IngestionOrchestrator:
 
         # 3. Defense profiles
         logger.info("Computing defense profiles through week %d", max_week)
-        summary["defense_profiles"] = nflverse.compute_defense_profiles(season, max_week)
+        summary["defense_profiles"] = nflverse.compute_defense_profiles(
+            season, max_week
+        )
 
         if self._owns_session:
             self.session.close()
@@ -84,9 +86,21 @@ class IngestionOrchestrator:
             if player:
                 game_id = nflverse._find_game_id(player.team, season, week)
                 if game_id:
-                    stat_data = {k: v for k, v in w.items()
-                                 if k not in ("nflverse_id", "name", "team", "position", "week", "season", "source")
-                                 and v is not None}
+                    stat_data = {
+                        k: v
+                        for k, v in w.items()
+                        if k
+                        not in (
+                            "nflverse_id",
+                            "name",
+                            "team",
+                            "position",
+                            "week",
+                            "season",
+                            "source",
+                        )
+                        and v is not None
+                    }
                     stat_data["source"] = "nflverse"
                     stats_repo.upsert(player.player_id, game_id, **stat_data)
                     summary["nflverse_stats"] += 1

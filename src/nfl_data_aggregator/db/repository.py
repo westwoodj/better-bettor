@@ -102,7 +102,9 @@ class StatsRepo:
     def get(self, player_id: str, game_id: str) -> PlayerGameStats | None:
         return self.session.get(PlayerGameStats, (player_id, game_id))
 
-    def get_player_games(self, player_id: str, season: int | None = None) -> list[PlayerGameStats]:
+    def get_player_games(
+        self, player_id: str, season: int | None = None
+    ) -> list[PlayerGameStats]:
         stmt = select(PlayerGameStats).where(PlayerGameStats.player_id == player_id)
         if season is not None:
             stmt = stmt.join(Game).where(Game.season == season)
@@ -172,10 +174,14 @@ class OddsRepo:
             stmt = stmt.where(OddsEvent.commence_time >= commence_from)
         if commence_to is not None:
             stmt = stmt.where(OddsEvent.commence_time <= commence_to)
-        stmt = stmt.order_by(OddsEvent.commence_time.asc(), OddsEvent.event_id.asc()).limit(limit)
+        stmt = stmt.order_by(
+            OddsEvent.commence_time.asc(), OddsEvent.event_id.asc()
+        ).limit(limit)
         return list(self.session.scalars(stmt).all())
 
-    def latest_snapshot(self, event_id: str, request_signature: str) -> OddsSnapshot | None:
+    def latest_snapshot(
+        self, event_id: str, request_signature: str
+    ) -> OddsSnapshot | None:
         stmt = (
             select(OddsSnapshot)
             .where(
@@ -196,6 +202,7 @@ class OddsRepo:
         line = OddsLine(**kwargs)
         self.session.add(line)
         return line
+
 
 class PredictionRepo:
     def __init__(self, session: Session):
@@ -220,7 +227,14 @@ class DefenseProfileRepo:
     def __init__(self, session: Session):
         self.session = session
 
-    def upsert(self, team: str, season: int, week_through: int, source: str = "nflverse", **kwargs) -> DefenseProfile:
+    def upsert(
+        self,
+        team: str,
+        season: int,
+        week_through: int,
+        source: str = "nflverse",
+        **kwargs,
+    ) -> DefenseProfile:
         stmt = select(DefenseProfile).where(
             DefenseProfile.team == team,
             DefenseProfile.season == season,
@@ -230,7 +244,11 @@ class DefenseProfileRepo:
         profile = self.session.execute(stmt).scalar_one_or_none()
         if profile is None:
             profile = DefenseProfile(
-                team=team, season=season, week_through=week_through, source=source, **kwargs,
+                team=team,
+                season=season,
+                week_through=week_through,
+                source=source,
+                **kwargs,
             )
             self.session.add(profile)
         else:

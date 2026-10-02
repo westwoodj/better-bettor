@@ -89,13 +89,23 @@ class ESPNIngestor:
         if summary is None:
             summary = self.client.event_summary(game_id, force=force)
         if not isinstance(summary, dict):
-            raise ValueError(f"ESPN returned an invalid event summary for game {game_id}")
+            raise ValueError(  # noqa: TRY004
+                f"ESPN returned an invalid event summary for game {game_id}"
+            )
 
-        parsed_game = self.adapter.extract_game_from_event_summary(summary, game_id) or {}
-        game_data = {key: value for key, value in parsed_game.items() if value is not None}
-        game_data.update({
-            key: value for key, value in (base_game_data or {}).items() if value is not None
-        })
+        parsed_game = (
+            self.adapter.extract_game_from_event_summary(summary, game_id) or {}
+        )
+        game_data = {
+            key: value for key, value in parsed_game.items() if value is not None
+        }
+        game_data.update(
+            {
+                key: value
+                for key, value in (base_game_data or {}).items()
+                if value is not None
+            }
+        )
         game_data["game_id"] = str(game_data.get("game_id") or game_id)
         self._upsert_game(game_data)
 
@@ -133,7 +143,7 @@ class ESPNIngestor:
         espn_id = player.espn_id or player.player_id
         gamelog = self.client.player_gamelog(espn_id, season, force=force)
         if not isinstance(gamelog, dict):
-            raise ValueError(f"ESPN returned an invalid gamelog for player {player_id}")
+            raise ValueError(f"ESPN returned an invalid gamelog for player {player_id}")  # noqa: TRY004
         game_ids = self.adapter.extract_game_ids_from_gamelog(gamelog)
         if not game_ids:
             raise ValueError(f"No ESPN games found for player {player_id} in {season}")
@@ -160,11 +170,15 @@ class ESPNIngestor:
         for week in range(1, game.week):
             week_games = self.game_repo.find_by_week(game.season, week)
             team_games = [
-                candidate for candidate in week_games
+                candidate
+                for candidate in week_games
                 if candidate.home_team in teams or candidate.away_team in teams
             ]
             complete = all(
-                any(self._has_team_stats(candidate.game_id, team) for candidate in team_games)
+                any(
+                    self._has_team_stats(candidate.game_id, team)
+                    for candidate in team_games
+                )
                 for team in teams
             )
             if complete:
@@ -250,7 +264,8 @@ class ESPNIngestor:
 
         if existing is not None:
             data = {
-                key: value for key, value in data.items()
+                key: value
+                for key, value in data.items()
                 if value is not None and not (key in {"season", "week"} and value == 0)
             }
         else:
@@ -269,7 +284,7 @@ def _parse_datetime(value: Any) -> datetime | None:
     if not value or not isinstance(value, str):
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return datetime.fromisoformat(value)
     except ValueError:
         logger.warning("Could not parse ESPN kickoff time %r", value)
         return None

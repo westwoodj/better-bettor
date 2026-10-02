@@ -72,10 +72,16 @@ class ESPNStatsAdapter:
                 games.append(game)
         return games
 
-    def extract_game_from_event_summary(self, summary_data: dict, game_id: str) -> dict | None:
+    def extract_game_from_event_summary(
+        self, summary_data: dict, game_id: str
+    ) -> dict | None:
         """Parse game metadata from an ESPN event-summary response."""
-        header = summary_data.get("header", {}) if isinstance(summary_data, dict) else {}
-        competitions = header.get("competitions", []) if isinstance(header, dict) else []
+        header = (
+            summary_data.get("header", {}) if isinstance(summary_data, dict) else {}
+        )
+        competitions = (
+            header.get("competitions", []) if isinstance(header, dict) else []
+        )
         if not competitions:
             return None
 
@@ -93,7 +99,9 @@ class ESPNStatsAdapter:
             venue = game_info.get("venue") or {}
             if venue:
                 game["venue"] = venue.get("fullName") or game.get("venue")
-                game["venue_location"] = _venue_location(venue) or game.get("venue_location")
+                game["venue_location"] = _venue_location(venue) or game.get(
+                    "venue_location"
+                )
             weather = game_info.get("weather") or {}
             if weather:
                 game["weather_conditions"] = _weather_conditions(weather)
@@ -151,17 +159,25 @@ class ESPNStatsAdapter:
                 if not include_all_positions and pos not in SKILL_POSITIONS:
                     continue
                 status_info = athlete.get("status", {})
-                players.append({
-                    "player_id": str(athlete.get("id", "")),
-                    "espn_id": str(athlete.get("id", "")),
-                    "name": athlete.get("fullName", athlete.get("displayName", "")),
-                    "team": team_abbr,
-                    "position": pos,
-                    "status": status_info.get("type") if isinstance(status_info, dict) else None,
-                    "height": athlete.get("displayHeight"),
-                    "weight": _safe_int(athlete.get("weight")),
-                    "experience": _safe_int(athlete.get("experience", {}).get("years")) if isinstance(athlete.get("experience"), dict) else None,
-                })
+                players.append(
+                    {
+                        "player_id": str(athlete.get("id", "")),
+                        "espn_id": str(athlete.get("id", "")),
+                        "name": athlete.get("fullName", athlete.get("displayName", "")),
+                        "team": team_abbr,
+                        "position": pos,
+                        "status": status_info.get("type")
+                        if isinstance(status_info, dict)
+                        else None,
+                        "height": athlete.get("displayHeight"),
+                        "weight": _safe_int(athlete.get("weight")),
+                        "experience": _safe_int(
+                            athlete.get("experience", {}).get("years")
+                        )
+                        if isinstance(athlete.get("experience"), dict)
+                        else None,
+                    }
+                )
         return players
 
     def _extract_game(self, event: dict, fallback_game_id: str) -> dict | None:
@@ -206,13 +222,14 @@ class ESPNStatsAdapter:
             "final_score": final_score,
         }
 
-    def extract_stats_from_event_summary(self, summary_data: dict, game_id: str) -> list[dict]:
+    def extract_stats_from_event_summary(
+        self, summary_data: dict, game_id: str
+    ) -> list[dict]:
         """Parse an ESPN event summary into per-player stat dicts."""
         stats_list = []
         boxscore = summary_data.get("boxscore", {})
 
         for team_players in boxscore.get("players", []):
-            team_abbr = team_players.get("team", {}).get("abbreviation", "")
             for stat_group in team_players.get("statistics", []):
                 category = stat_group.get("name", "").lower()
                 stat_keys = stat_group.get("keys", [])
@@ -222,7 +239,11 @@ class ESPNStatsAdapter:
                     athlete_info = athlete_entry.get("athlete", {})
                     player_id = str(athlete_info.get("id", ""))
                     position = athlete_info.get("position", {})
-                    pos = position.get("abbreviation", "") if isinstance(position, dict) else ""
+                    pos = (
+                        position.get("abbreviation", "")
+                        if isinstance(position, dict)
+                        else ""
+                    )
 
                     if pos not in SKILL_POSITIONS:
                         continue
@@ -273,17 +294,23 @@ class ESPNStatsAdapter:
                     seen.add(pid)
 
                     position = athlete_info.get("position", {})
-                    pos = position.get("abbreviation", "") if isinstance(position, dict) else ""
+                    pos = (
+                        position.get("abbreviation", "")
+                        if isinstance(position, dict)
+                        else ""
+                    )
                     if pos not in SKILL_POSITIONS:
                         continue
 
-                    players.append({
-                        "player_id": pid,
-                        "espn_id": pid,
-                        "name": athlete_info.get("displayName", ""),
-                        "team": team_abbr,
-                        "position": pos,
-                    })
+                    players.append(
+                        {
+                            "player_id": pid,
+                            "espn_id": pid,
+                            "name": athlete_info.get("displayName", ""),
+                            "team": team_abbr,
+                            "position": pos,
+                        }
+                    )
         return players
 
 
@@ -322,7 +349,7 @@ def _safe_int(val: Any) -> int | None:
         return None
     try:
         return int(val)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -331,7 +358,7 @@ def _safe_float(val: Any) -> float | None:
         return None
     try:
         return float(val)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
 
 
@@ -345,7 +372,9 @@ def _venue_location(venue: dict) -> dict | None:
         "country": address.get("country"),
         "zip_code": address.get("zipCode"),
     }
-    return {key: value for key, value in location.items() if value not in (None, "")} or None
+    return {
+        key: value for key, value in location.items() if value not in (None, "")
+    } or None
 
 
 def _weather_conditions(weather: dict) -> dict | None:
@@ -361,4 +390,6 @@ def _weather_conditions(weather: dict) -> dict | None:
         "humidity": weather.get("humidity"),
         "condition": condition,
     }
-    return {key: value for key, value in values.items() if value not in (None, "")} or None
+    return {
+        key: value for key, value in values.items() if value not in (None, "")
+    } or None

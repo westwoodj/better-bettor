@@ -15,14 +15,28 @@ class PlayerAnalysisSignature(dspy.Signature):
     Do NOT fabricate statistics or cite data not present in the context.
     """
 
-    player_context: str = dspy.InputField(desc="Player profile, recent game stats, and season averages")
-    matchup_context: str = dspy.InputField(desc="Opponent defense profile and matchup details")
-    game_environment: str = dspy.InputField(desc="Venue, weather, and game type information")
+    player_context: str = dspy.InputField(
+        desc="Player profile, recent game stats, and season averages"
+    )
+    matchup_context: str = dspy.InputField(
+        desc="Opponent defense profile and matchup details"
+    )
+    game_environment: str = dspy.InputField(
+        desc="Venue, weather, and game type information"
+    )
 
-    trend_analysis: str = dspy.OutputField(desc="Analysis of recent performance trends (2-3 sentences)")
-    matchup_assessment: str = dspy.OutputField(desc="Assessment of how the matchup favors or challenges the player (2-3 sentences)")
-    key_factors: str = dspy.OutputField(desc="Comma-separated list of 3-5 key positive factors for the player's performance")
-    risk_factors: str = dspy.OutputField(desc="Comma-separated list of 2-4 risk or downside factors")
+    trend_analysis: str = dspy.OutputField(
+        desc="Analysis of recent performance trends (2-3 sentences)"
+    )
+    matchup_assessment: str = dspy.OutputField(
+        desc="Assessment of how the matchup favors or challenges the player (2-3 sentences)"
+    )
+    key_factors: str = dspy.OutputField(
+        desc="Comma-separated list of 3-5 key positive factors for the player's performance"
+    )
+    risk_factors: str = dspy.OutputField(
+        desc="Comma-separated list of 2-4 risk or downside factors"
+    )
 
 
 class PlayerAnalysis(dspy.Module):

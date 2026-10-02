@@ -7,11 +7,11 @@ from typing import Any
 # without installing pydantic during initial development or static checks.
 try:
     from pydantic import BaseModel, Field
-except Exception:
+except Exception:  # noqa: BLE001
     BaseModel = object
 
-    def Field(default: Any = None, **kwargs):
-        return default
+    def Field(default: Any = None, default_factory=None, **kwargs):
+        return default_factory() if default_factory is not None else default
 
     # create a tiny BaseModel replacement with dict/json helpers if needed
     class SimpleBaseModel:
@@ -33,7 +33,9 @@ except Exception:
             import json as _json
 
             indent = kwargs.get("indent", None)
-            return _json.dumps(self.dict(), default=str, ensure_ascii=False, indent=indent)
+            return _json.dumps(
+                self.dict(), default=str, ensure_ascii=False, indent=indent
+            )
 
     BaseModel = SimpleBaseModel
 
@@ -82,8 +84,8 @@ class FeatureSet(BaseModel):
     matchup: Matchup
     home_team_stats: TeamStats
     away_team_stats: TeamStats
-    injured_players: list[PlayerStats] | None = []
-    market_odds: list[Odds] | None = []
+    injured_players: list[PlayerStats] | None = Field(default_factory=list)
+    market_odds: list[Odds] | None = Field(default_factory=list)
 
 
 class Recommendation(BaseModel):
@@ -92,7 +94,7 @@ class Recommendation(BaseModel):
     best_spread_side: str | None = None
     best_moneyline: str | None = None
     best_total: float | None = None
-    player_props: list[dict] | None = []
+    player_props: list[dict] | None = Field(default_factory=list)
     rationale: str | None = None
 
 
@@ -113,6 +115,7 @@ class Athlete:
     - slot: integer slot number
     - rank: integer rank within position/slot
     """
+
     first_name: str | None = None
     last_name: str | None = None
     position: str | None = None
@@ -135,7 +138,9 @@ class Athlete:
         # If object contains nested 'athlete' resource use that
         if "athlete" in d and isinstance(d["athlete"], dict):
             a = d["athlete"]
-            meta.update({k: v for k, v in a.items() if k not in ("firstName", "lastName", "id")})
+            meta.update(
+                {k: v for k, v in a.items() if k not in ("firstName", "lastName", "id")}
+            )
             first = a.get("firstName") or a.get("first_name") or a.get("preferredName")
             last = a.get("lastName") or a.get("last_name") or a.get("familyName")
             aid = a.get("id") or a.get("athleteId") or a.get("athlete_id")
@@ -148,13 +153,48 @@ class Athlete:
             else:
                 is_healthy = None
             # collect more known fields into meta
-            for f in ("fullName", "displayName", "shortName", "jersey", "weight", "displayWeight", "height", "displayHeight", "dateOfBirth", "experience", "position", "team", "status"):
+            for f in (
+                "fullName",
+                "displayName",
+                "shortName",
+                "jersey",
+                "weight",
+                "displayWeight",
+                "height",
+                "displayHeight",
+                "dateOfBirth",
+                "experience",
+                "position",
+                "team",
+                "status",
+            ):
                 if f in a:
                     meta[f] = a.get(f)
         else:
             # If top-level dict likely came from fetch_by_ref or already-resolved athlete
-            meta.update({k: v for k, v in d.items() if k not in ("firstName", "lastName", "id", "slot", "rank", "position", "pos", "athlete")})
-            first = d.get("firstName") or d.get("first_name") or d.get("preferredName") or d.get("fullName")
+            meta.update(
+                {
+                    k: v
+                    for k, v in d.items()
+                    if k
+                    not in (
+                        "firstName",
+                        "lastName",
+                        "id",
+                        "slot",
+                        "rank",
+                        "position",
+                        "pos",
+                        "athlete",
+                    )
+                }
+            )
+            first = (
+                d.get("firstName")
+                or d.get("first_name")
+                or d.get("preferredName")
+                or d.get("fullName")
+            )
             last = d.get("lastName") or d.get("last_name") or d.get("familyName")
             aid = d.get("id") or d.get("athleteId") or d.get("athlete_id")
             is_healthy = None
@@ -165,7 +205,15 @@ class Athlete:
         return cls(
             first_name=first,
             last_name=last,
-            position=(d.get("position") or (meta.get("position") if isinstance(meta.get("position"), str) else None) or d.get("pos")),
+            position=(
+                d.get("position")
+                or (
+                    meta.get("position")
+                    if isinstance(meta.get("position"), str)
+                    else None
+                )
+                or d.get("pos")
+            ),
             id=str(aid) if aid is not None else None,
             is_healthy=(bool(is_healthy) if is_healthy is not None else None),
             slot=d.get("slot"),
@@ -181,7 +229,7 @@ class Athlete:
             import json as _json
 
             _json.dumps(data.get("meta", {}))
-        except Exception:
+        except Exception:  # noqa: BLE001
             data["meta"] = {k: str(v) for k, v in (data.get("meta") or {}).items()}
         return data
 
@@ -191,8 +239,10 @@ class Athlete:
 
 # --- Phase 1 prediction response models ---
 
+
 class StatPrediction(BaseModel):
     """Predicted stat with floor/expected/ceiling range."""
+
     stat_name: str
     floor: float | None = None
     expected: float | None = None
@@ -201,6 +251,7 @@ class StatPrediction(BaseModel):
 
 class PropComparisonItem(BaseModel):
     """Comparison of a prediction against a prop line."""
+
     market: str
     line: float
     predicted: float
@@ -211,15 +262,16 @@ class PropComparisonItem(BaseModel):
 
 class PlayerPredictionResponse(BaseModel):
     """Full prediction response for a player."""
+
     player_id: str
     player_name: str | None = None
     game_id: str
-    predicted_stats: list[StatPrediction] | None = []
+    predicted_stats: list[StatPrediction] | None = Field(default_factory=list)
     confidence_score: float = 0.0
     confidence_grade: str | None = None
     trend_analysis: str | None = None
     matchup_assessment: str | None = None
     key_factors: str | None = None
     risk_factors: str | None = None
-    prop_comparisons: list[PropComparisonItem] | None = []
+    prop_comparisons: list[PropComparisonItem] | None = Field(default_factory=list)
     data_snapshot_hash: str | None = None

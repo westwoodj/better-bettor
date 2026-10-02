@@ -119,11 +119,17 @@ class PredictionContext:
         for g in self.recent_games:
             parts = [f"  Week {g.week} vs {g.opponent}:"]
             if g.pass_yards is not None:
-                parts.append(f"    Passing: {g.pass_completions or 0}/{g.pass_attempts or 0} for {g.pass_yards} yds, {g.pass_tds or 0} TD, {g.interceptions or 0} INT")
+                parts.append(
+                    f"    Passing: {g.pass_completions or 0}/{g.pass_attempts or 0} for {g.pass_yards} yds, {g.pass_tds or 0} TD, {g.interceptions or 0} INT"
+                )
             if g.rush_yards is not None:
-                parts.append(f"    Rushing: {g.rush_attempts or 0} att, {g.rush_yards} yds, {g.rush_tds or 0} TD")
+                parts.append(
+                    f"    Rushing: {g.rush_attempts or 0} att, {g.rush_yards} yds, {g.rush_tds or 0} TD"
+                )
             if g.receiving_yards is not None:
-                parts.append(f"    Receiving: {g.receptions or 0} rec ({g.targets or 0} tgt), {g.receiving_yards} yds, {g.receiving_tds or 0} TD")
+                parts.append(
+                    f"    Receiving: {g.receptions or 0} rec ({g.targets or 0} tgt), {g.receiving_yards} yds, {g.receiving_tds or 0} TD"
+                )
             if g.fantasy_points is not None:
                 parts.append(f"    Fantasy: {g.fantasy_points:.1f} pts")
             lines.extend(parts)
@@ -137,11 +143,17 @@ class PredictionContext:
             f"Matchup: vs {m.opponent} ({m.home_away})",
         ]
         if m.opponent_pass_yards_allowed is not None:
-            lines.append(f"  Opponent pass yards allowed/game: {m.opponent_pass_yards_allowed:.1f}")
+            lines.append(
+                f"  Opponent pass yards allowed/game: {m.opponent_pass_yards_allowed:.1f}"
+            )
         if m.opponent_rush_yards_allowed is not None:
-            lines.append(f"  Opponent rush yards allowed/game: {m.opponent_rush_yards_allowed:.1f}")
+            lines.append(
+                f"  Opponent rush yards allowed/game: {m.opponent_rush_yards_allowed:.1f}"
+            )
         if m.opponent_points_allowed is not None:
-            lines.append(f"  Opponent points allowed/game: {m.opponent_points_allowed:.1f}")
+            lines.append(
+                f"  Opponent points allowed/game: {m.opponent_points_allowed:.1f}"
+            )
         if m.opponent_pressure_rate is not None:
             lines.append(f"  Opponent pressure rate: {m.opponent_pressure_rate:.1%}")
         return "\n".join(lines)
@@ -192,4 +204,6 @@ class PredictionContext:
             "has_matchup": self.matchup is not None,
             "prop_lines": len(self.prop_lines),
         }
-        return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()[:16]
+        return hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()[
+            :16
+        ]

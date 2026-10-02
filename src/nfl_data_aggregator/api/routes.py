@@ -55,30 +55,36 @@ def _confidence_grade(score: float) -> str:
     return "F"
 
 
-def _prediction_result_to_response(result, player_name: str | None = None) -> PredictionResponse:
+def _prediction_result_to_response(
+    result, player_name: str | None = None
+) -> PredictionResponse:
     """Convert a PredictionResult dataclass to a PredictionResponse schema."""
     stats = []
     for stat_name, values in (result.predicted_stats or {}).items():
         if isinstance(values, dict):
-            stats.append(StatPredictionSchema(
-                stat_name=stat_name,
-                floor=values.get("floor"),
-                expected=values.get("expected"),
-                ceiling=values.get("ceiling"),
-            ))
+            stats.append(
+                StatPredictionSchema(
+                    stat_name=stat_name,
+                    floor=values.get("floor"),
+                    expected=values.get("expected"),
+                    ceiling=values.get("ceiling"),
+                )
+            )
 
     props = []
-    for p in (result.prop_comparisons or []):
-        props.append(PropRecommendation(
-            market=p.get("market", ""),
-            line=p.get("line", 0),
-            predicted=p.get("predicted", 0),
-            edge=p.get("edge", 0),
-            recommendation=p.get("recommendation", ""),
-            sportsbook=p.get("sportsbook"),
-            player_id=result.player_id,
-            player_name=player_name,
-        ))
+    for p in result.prop_comparisons or []:
+        props.append(
+            PropRecommendation(
+                market=p.get("market", ""),
+                line=p.get("line", 0),
+                predicted=p.get("predicted", 0),
+                edge=p.get("edge", 0),
+                recommendation=p.get("recommendation", ""),
+                sportsbook=p.get("sportsbook"),
+                player_id=result.player_id,
+                player_name=player_name,
+            )
+        )
 
     hallucination_passed = None
     if result.hallucination_check is not None:
@@ -103,6 +109,7 @@ def _prediction_result_to_response(result, player_name: str | None = None) -> Pr
 
 # --- Health ---
 
+
 @router.get("/health", response_model=HealthResponse)
 def health_check(db: Session = Depends(get_db)):
     """Check system health: DB connectivity and DSPy configuration."""
@@ -111,7 +118,7 @@ def health_check(db: Session = Depends(get_db)):
         db.execute(__import__("sqlalchemy").text("SELECT 1"))
         db_ok = True
     except Exception:
-        pass
+        logger.debug("Ignoring recoverable error", exc_info=True)
 
     dspy_configured = bool(
         getattr(settings, "ANTHROPIC_API_KEY", None)
@@ -127,6 +134,7 @@ def health_check(db: Session = Depends(get_db)):
 
 
 # --- Single Player Prediction ---
+
 
 @router.get("/players/{player_id}/prediction", response_model=PredictionResponse)
 def get_player_prediction(
@@ -152,11 +160,14 @@ def get_player_prediction(
         result = service.predict_player(player_id, game_id)
         return _prediction_result_to_response(result, player_name=player.name)
     except Exception as exc:
-        logger.exception("Prediction pipeline failed for player=%s game=%s", player_id, game_id)
+        logger.exception(
+            "Prediction pipeline failed for player=%s game=%s", player_id, game_id
+        )
         raise HTTPException(status_code=500, detail=str(exc))
 
 
 # --- Batch Predictions ---
+
 
 @router.post("/predictions/batch", response_model=BatchPredictionResponse)
 def batch_predictions(
@@ -178,9 +189,15 @@ def batch_predictions(
             continue
         try:
             result = service.predict_player(item.player_id, item.game_id)
-            results.append(_prediction_result_to_response(result, player_name=player.name))
+            results.append(
+                _prediction_result_to_response(result, player_name=player.name)
+            )
         except Exception:
-            logger.exception("Batch prediction failed for player=%s game=%s", item.player_id, item.game_id)
+            logger.exception(
+                "Batch prediction failed for player=%s game=%s",
+                item.player_id,
+                item.game_id,
+            )
             failed += 1
 
     return BatchPredictionResponse(
@@ -192,6 +209,7 @@ def batch_predictions(
 
 
 # --- Prop Recommendations ---
+
 
 @router.get("/props/recommendations", response_model=PropRecommendationsResponse)
 def get_prop_recommendations(
@@ -228,21 +246,25 @@ def get_prop_recommendations(
             if sportsbook is not None and prop_sportsbook != sportsbook:
                 continue
 
-            recommendations.append(PropRecommendation(
-                market=prop.get("market", ""),
-                line=prop.get("line", 0),
-                predicted=prop.get("predicted", 0),
-                edge=edge,
-                recommendation=prop.get("recommendation", ""),
-                sportsbook=prop_sportsbook,
-                player_id=pred.player_id,
-                player_name=player_name,
-            ))
+            recommendations.append(
+                PropRecommendation(
+                    market=prop.get("market", ""),
+                    line=prop.get("line", 0),
+                    predicted=prop.get("predicted", 0),
+                    edge=edge,
+                    recommendation=prop.get("recommendation", ""),
+                    sportsbook=prop_sportsbook,
+                    player_id=pred.player_id,
+                    player_name=player_name,
+                )
+            )
 
     return PropRecommendationsResponse(recommendations=recommendations)
 
 
-@router.get("/props/recommendations/{player_id}", response_model=PropRecommendationsResponse)
+@router.get(
+    "/props/recommendations/{player_id}", response_model=PropRecommendationsResponse
+)
 def get_player_props(
     player_id: str,
     game_id: str | None = Query(None, description="Filter by game ID"),
@@ -276,21 +298,24 @@ def get_player_props(
         if not pred.recommended_props:
             continue
         for prop in pred.recommended_props:
-            recommendations.append(PropRecommendation(
-                market=prop.get("market", ""),
-                line=prop.get("line", 0),
-                predicted=prop.get("predicted", 0),
-                edge=prop.get("edge", 0),
-                recommendation=prop.get("recommendation", ""),
-                sportsbook=prop.get("sportsbook"),
-                player_id=player_id,
-                player_name=player.name,
-            ))
+            recommendations.append(
+                PropRecommendation(
+                    market=prop.get("market", ""),
+                    line=prop.get("line", 0),
+                    predicted=prop.get("predicted", 0),
+                    edge=prop.get("edge", 0),
+                    recommendation=prop.get("recommendation", ""),
+                    sportsbook=prop.get("sportsbook"),
+                    player_id=player_id,
+                    player_name=player.name,
+                )
+            )
 
     return PropRecommendationsResponse(recommendations=recommendations)
 
 
 # --- Player Stats ---
+
 
 @router.get("/players/{player_id}/stats", response_model=PlayerStatsResponse)
 def get_player_stats(
@@ -322,26 +347,28 @@ def get_player_stats(
             else:
                 opponent = game.home_team
 
-        rows.append(GameStatRow(
-            game_id=gs.game_id,
-            season=game_season,
-            week=game_week,
-            opponent=opponent,
-            pass_completions=gs.pass_completions,
-            pass_attempts=gs.pass_attempts,
-            pass_yards=gs.pass_yards,
-            pass_tds=gs.pass_tds,
-            interceptions=gs.interceptions,
-            rush_attempts=gs.rush_attempts,
-            rush_yards=gs.rush_yards,
-            rush_tds=gs.rush_tds,
-            receptions=gs.receptions,
-            targets=gs.targets,
-            receiving_yards=gs.receiving_yards,
-            receiving_tds=gs.receiving_tds,
-            fumbles=gs.fumbles,
-            fantasy_points=gs.fantasy_points,
-        ))
+        rows.append(
+            GameStatRow(
+                game_id=gs.game_id,
+                season=game_season,
+                week=game_week,
+                opponent=opponent,
+                pass_completions=gs.pass_completions,
+                pass_attempts=gs.pass_attempts,
+                pass_yards=gs.pass_yards,
+                pass_tds=gs.pass_tds,
+                interceptions=gs.interceptions,
+                rush_attempts=gs.rush_attempts,
+                rush_yards=gs.rush_yards,
+                rush_tds=gs.rush_tds,
+                receptions=gs.receptions,
+                targets=gs.targets,
+                receiving_yards=gs.receiving_yards,
+                receiving_tds=gs.receiving_tds,
+                fumbles=gs.fumbles,
+                fantasy_points=gs.fantasy_points,
+            )
+        )
 
     return PlayerStatsResponse(
         player=PlayerResponse(
@@ -356,6 +383,7 @@ def get_player_stats(
 
 
 # --- Game Context ---
+
 
 @router.get("/games/{game_id}/context", response_model=GameContextResponse)
 def get_game_context(
@@ -437,7 +465,15 @@ def search_teams(
         return TeamSearchResponse(results=[])
 
     query_lower = q.lower()
-    fields = ("displayName", "shortDisplayName", "name", "abbreviation", "slug", "nickname", "location")
+    fields = (
+        "displayName",
+        "shortDisplayName",
+        "name",
+        "abbreviation",
+        "slug",
+        "nickname",
+        "location",
+    )
     results: list[TeamSearchResult] = []
     seen_ids: set[str] = set()
 
@@ -453,14 +489,16 @@ def search_teams(
                     val = team.get(key)
                     if val and query_lower in val.lower():
                         seen_ids.add(team_id)
-                        results.append(TeamSearchResult(
-                            id=team_id,
-                            abbreviation=team.get("abbreviation", ""),
-                            displayName=team.get("displayName", ""),
-                            shortDisplayName=team.get("shortDisplayName"),
-                            location=team.get("location"),
-                            nickname=team.get("nickname"),
-                        ))
+                        results.append(
+                            TeamSearchResult(
+                                id=team_id,
+                                abbreviation=team.get("abbreviation", ""),
+                                displayName=team.get("displayName", ""),
+                                shortDisplayName=team.get("shortDisplayName"),
+                                location=team.get("location"),
+                                nickname=team.get("nickname"),
+                            )
+                        )
                         break
 
     return TeamSearchResponse(results=results)
@@ -500,7 +538,9 @@ def get_team_roster(
 
     team_id = team_info.get("id")
     if not team_id:
-        raise HTTPException(status_code=404, detail=f"Team '{team_abbr}' has no ESPN ID")
+        raise HTTPException(
+            status_code=404, detail=f"Team '{team_abbr}' has no ESPN ID"
+        )
 
     # Only use a local file when it is actually roster-specific. The generic
     # local-data heuristic must not turn all-teams.json into a roster payload.
@@ -513,7 +553,9 @@ def get_team_roster(
         roster_data = client.roster(team_id, force=roster_path is None)
     except Exception as exc:
         logger.exception("Failed to fetch roster for team %s", team_abbr)
-        raise HTTPException(status_code=502, detail=f"Failed to fetch roster from ESPN: {exc}")
+        raise HTTPException(
+            status_code=502, detail=f"Failed to fetch roster from ESPN: {exc}"
+        )
 
     adapter = ESPNStatsAdapter(client)
     abbr = team_info.get("abbreviation", team_abbr.upper())
@@ -595,7 +637,11 @@ def search_games(
         games = game_repo.find_by_week(season, week)
         if team:
             team_upper = team.upper()
-            games = [g for g in games if g.home_team == team_upper or g.away_team == team_upper]
+            games = [
+                g
+                for g in games
+                if g.home_team == team_upper or g.away_team == team_upper
+            ]
     elif team and season is not None:
         games = game_repo.find_by_team(team.upper(), season)
     elif team:

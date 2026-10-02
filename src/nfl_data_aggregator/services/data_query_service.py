@@ -45,12 +45,12 @@ class DataQueryError(ValueError):
 class DataQueryService:
     """Query persisted NFL data and explicitly refresh bounded ESPN resources."""
 
-    def __init__(self, session: Session, espn_client: NFLClient | None = None, odds_client=None):
+    def __init__(
+        self, session: Session, espn_client: NFLClient | None = None, odds_client=None
+    ):
         self.session = session
         self.client = espn_client or NFLClient()
-        self.odds = OddsQueryService(
-            session, odds_client, espn_client=self.client
-        )
+        self.odds = OddsQueryService(session, odds_client, espn_client=self.client)
 
     def get_cache_status(self) -> CacheStatusResult:
         models = {
@@ -66,11 +66,18 @@ class DataQueryService:
             name: int(self.session.scalar(select(func.count()).select_from(model)) or 0)
             for name, model in models.items()
         }
-        seasons = list(self.session.scalars(select(Game.season).distinct().order_by(Game.season)).all())
+        seasons = list(
+            self.session.scalars(
+                select(Game.season).distinct().order_by(Game.season)
+            ).all()
+        )
         weeks: dict[str, list[int]] = {}
         for season in seasons:
             values = self.session.scalars(
-                select(Game.week).where(Game.season == season).distinct().order_by(Game.week)
+                select(Game.week)
+                .where(Game.season == season)
+                .distinct()
+                .order_by(Game.week)
             ).all()
             weeks[str(season)] = list(values)
 
@@ -180,7 +187,9 @@ class DataQueryService:
             stmt = stmt.where(Player.position == position.upper())
         stmt = stmt.order_by(Player.name.asc(), Player.player_id.asc()).limit(limit)
         players = list(self.session.scalars(stmt).all())
-        return PlayerSearchResult(query=query, players=[_player_record(player) for player in players])
+        return PlayerSearchResult(
+            query=query, players=[_player_record(player) for player in players]
+        )
 
     def get_player_performances(
         self,
@@ -198,7 +207,9 @@ class DataQueryService:
         refresh = RefreshMetadata(force_requested=force)
         if force:
             if season is None:
-                raise DataQueryError("season is required when force=true for player performances")
+                raise DataQueryError(
+                    "season is required when force=true for player performances"
+                )
             counts = self._run_refresh(
                 lambda ingestor: ingestor.ingest_player_season(
                     player_id, season, force=True, commit=False
@@ -214,10 +225,15 @@ class DataQueryService:
         if season is not None:
             stmt = stmt.where(Game.season == season)
         stmt = stmt.order_by(
-            Game.season.desc(), Game.week.desc(), Game.kickoff_time.desc(), Game.game_id.asc()
+            Game.season.desc(),
+            Game.week.desc(),
+            Game.kickoff_time.desc(),
+            Game.game_id.asc(),
         ).limit(limit)
         rows = self.session.execute(stmt).all()
-        performances = [_performance_record(stats, game, player) for stats, game in rows]
+        performances = [
+            _performance_record(stats, game, player) for stats, game in rows
+        ]
         return PlayerPerformancesResult(
             player=_player_record(player),
             performances=performances,
@@ -237,7 +253,9 @@ class DataQueryService:
         refresh = RefreshMetadata(force_requested=force)
         if force:
             if week is None:
-                raise DataQueryError("week is required when force=true for game listings")
+                raise DataQueryError(
+                    "week is required when force=true for game listings"
+                )
             counts = self._run_refresh(
                 lambda ingestor: ingestor.ingest_week(
                     season, week, force=True, strict=True, commit=False
@@ -255,9 +273,13 @@ class DataQueryService:
             Game.week.desc(), Game.kickoff_time.desc(), Game.game_id.asc()
         ).limit(limit)
         games = list(self.session.scalars(stmt).all())
-        return GamesResult(games=[_game_record(game) for game in games], refresh=refresh)
+        return GamesResult(
+            games=[_game_record(game) for game in games], refresh=refresh
+        )
 
-    def get_game_context(self, game_id: str, *, force: bool = False) -> GameContextResult:
+    def get_game_context(
+        self, game_id: str, *, force: bool = False
+    ) -> GameContextResult:
         refresh = RefreshMetadata(force_requested=force)
         if force:
             counts = self._run_refresh(
@@ -271,8 +293,12 @@ class DataQueryService:
         defenses = DefenseProfileRepo(self.session)
         return GameContextResult(
             game=_game_record(game),
-            home_defense=_defense_record(defenses.get_latest(game.home_team, game.season)),
-            away_defense=_defense_record(defenses.get_latest(game.away_team, game.season)),
+            home_defense=_defense_record(
+                defenses.get_latest(game.home_team, game.season)
+            ),
+            away_defense=_defense_record(
+                defenses.get_latest(game.away_team, game.season)
+            ),
             refresh=refresh,
         )
 
@@ -311,7 +337,9 @@ class DataQueryService:
         stmt = select(Player).where(Player.team == team_abbr)
         if not include_all_positions:
             stmt = stmt.where(Player.position.in_(sorted(SKILL_POSITIONS)))
-        stmt = stmt.order_by(Player.position.asc(), Player.name.asc(), Player.player_id.asc())
+        stmt = stmt.order_by(
+            Player.position.asc(), Player.name.asc(), Player.player_id.asc()
+        )
         players = list(self.session.scalars(stmt).all())
         return RosterResult(
             team=team_abbr,
@@ -324,7 +352,11 @@ class DataQueryService:
         try:
             result = operation(ESPNIngestor(self.session, self.client))
             self.session.commit()
-            return {key: int(value) for key, value in result.items() if isinstance(value, int)}
+            return {
+                key: int(value)
+                for key, value in result.items()
+                if isinstance(value, int)
+            }
         except DataQueryError:
             self.session.rollback()
             raise
@@ -337,7 +369,11 @@ class DataQueryService:
         url = bind.url
         identity = {"dialect": url.get_backend_name()}
         if url.database and url.database != ":memory:":
-            identity["database"] = Path(url.database).name if url.get_backend_name() == "sqlite" else url.database
+            identity["database"] = (
+                Path(url.database).name
+                if url.get_backend_name() == "sqlite"
+                else url.database
+            )
         if url.host:
             identity["host"] = url.host
         return identity
@@ -377,7 +413,9 @@ def _player_record(player: Player) -> PlayerRecord:
     )
 
 
-def _performance_record(stats: PlayerGameStats, game: Game, player: Player) -> PerformanceRecord:
+def _performance_record(
+    stats: PlayerGameStats, game: Game, player: Player
+) -> PerformanceRecord:
     opponent = None
     home_away = None
     if player.team == game.home_team:

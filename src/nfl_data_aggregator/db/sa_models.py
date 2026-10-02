@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 def _utcnow():
     return datetime.now(UTC)
 
+
 from sqlalchemy import (
     JSON,
     DateTime,
@@ -62,7 +63,9 @@ class Game(Base):
     game_stats: Mapped[list[PlayerGameStats]] = relationship(back_populates="game")
     prop_lines: Mapped[list[PropLine]] = relationship(back_populates="game")
     predictions: Mapped[list[Prediction]] = relationship(back_populates="game")
-    odds_event: Mapped[OddsEvent | None] = relationship(back_populates="game", uselist=False)
+    odds_event: Mapped[OddsEvent | None] = relationship(
+        back_populates="game", uselist=False
+    )
 
 
 class OddsEvent(Base):
@@ -77,8 +80,12 @@ class OddsEvent(Base):
     game_id: Mapped[str | None] = mapped_column(
         String(32), ForeignKey("games.game_id"), unique=True, nullable=True
     )
-    discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    discovered_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow
+    )
 
     game: Mapped[Game | None] = relationship(back_populates="odds_event")
     snapshots: Mapped[list[OddsSnapshot]] = relationship(
@@ -94,8 +101,12 @@ class OddsSnapshot(Base):
     __tablename__ = "odds_snapshots"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    event_id: Mapped[str] = mapped_column(String(64), ForeignKey("odds_events.event_id"))
-    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    event_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("odds_events.event_id")
+    )
+    fetched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow
+    )
     request_signature: Mapped[str] = mapped_column(String(64))
     requested_markets: Mapped[list] = mapped_column(JSON)
     regions: Mapped[list | None] = mapped_column(JSON, nullable=True)
@@ -155,8 +166,12 @@ class OddsLine(Base):
 class PlayerGameStats(Base):
     __tablename__ = "player_game_stats"
 
-    player_id: Mapped[str] = mapped_column(String(32), ForeignKey("players.player_id"), primary_key=True)
-    game_id: Mapped[str] = mapped_column(String(32), ForeignKey("games.game_id"), primary_key=True)
+    player_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("players.player_id"), primary_key=True
+    )
+    game_id: Mapped[str] = mapped_column(
+        String(32), ForeignKey("games.game_id"), primary_key=True
+    )
 
     # Passing
     pass_completions: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -203,7 +218,9 @@ class PropLine(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     player_id: Mapped[str] = mapped_column(String(32), ForeignKey("players.player_id"))
-    game_id: Mapped[str | None] = mapped_column(String(32), ForeignKey("games.game_id"), nullable=True)
+    game_id: Mapped[str | None] = mapped_column(
+        String(32), ForeignKey("games.game_id"), nullable=True
+    )
     market: Mapped[str] = mapped_column(String(64))
     line_value: Mapped[float] = mapped_column(Float)
     over_odds: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -245,12 +262,16 @@ class DefenseProfile(Base):
     pass_yards_allowed: Mapped[float | None] = mapped_column(Float, nullable=True)
     rush_yards_allowed: Mapped[float | None] = mapped_column(Float, nullable=True)
     points_allowed: Mapped[float | None] = mapped_column(Float, nullable=True)
-    position_fantasy_points_allowed: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    position_fantasy_points_allowed: Mapped[dict | None] = mapped_column(
+        JSON, nullable=True
+    )
     pressure_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
     coverage_grades: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     source: Mapped[str | None] = mapped_column(String(32), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
     __table_args__ = (
-        UniqueConstraint("team", "season", "week_through", "source", name="uq_defense_profile"),
+        UniqueConstraint(
+            "team", "season", "week_through", "source", name="uq_defense_profile"
+        ),
     )

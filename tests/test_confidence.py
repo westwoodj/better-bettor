@@ -26,14 +26,24 @@ from nfl_data_aggregator.pipeline.context_models import (
 def _make_full_context():
     """Build a rich PredictionContext with all sections populated."""
     games = [
-        GameStats(game_id=f"g{i}", week=i, season=2025, opponent="OPP",
-                  pass_yards=250 + i * 10, source="nflverse")
+        GameStats(
+            game_id=f"g{i}",
+            week=i,
+            season=2025,
+            opponent="OPP",
+            pass_yards=250 + i * 10,
+            source="nflverse",
+        )
         for i in range(1, 11)
     ]
     return PredictionContext(
         player=PlayerProfile(
-            player_id="p1", name="Test QB", team="KC",
-            position="QB", status="active", experience=7,
+            player_id="p1",
+            name="Test QB",
+            team="KC",
+            position="QB",
+            status="active",
+            experience=7,
         ),
         recent_games=games,
         season_averages=SeasonAverages(games_played=10, avg_pass_yards=295.0),
@@ -48,12 +58,21 @@ def _make_sparse_context():
     """Build a minimal context with little data."""
     return PredictionContext(
         player=PlayerProfile(
-            player_id="p2", name="Backup QB", team="KC",
-            position="QB", status="questionable",
+            player_id="p2",
+            name="Backup QB",
+            team="KC",
+            position="QB",
+            status="questionable",
         ),
         recent_games=[
-            GameStats(game_id="g1", week=2, season=2025, opponent="OPP",
-                      pass_yards=150, source="nflverse"),
+            GameStats(
+                game_id="g1",
+                week=2,
+                season=2025,
+                opponent="OPP",
+                pass_yards=150,
+                source="nflverse",
+            ),
         ],
         season_averages=SeasonAverages(games_played=1, avg_pass_yards=150.0),
     )
@@ -100,7 +119,12 @@ def test_games_played_penalty():
 def test_injury_status_scoring():
     scorer = DataQualityConfidence()
 
-    for status, expected_min in [("active", 100), ("probable", 85), ("questionable", 55), ("doubtful", 35)]:
+    for status, expected_min in [
+        ("active", 100),
+        ("probable", 85),
+        ("questionable", 55),
+        ("doubtful", 35),
+    ]:
         ctx = PredictionContext(
             player=PlayerProfile(player_id="p1", name="X", team="Y", status=status),
         )
@@ -170,7 +194,5 @@ def test_score_components_sum_to_total():
     result = scorer.score(ctx)
 
     # Weighted sum
-    computed = sum(
-        v["score"] * v["weight"] for v in result.breakdown.values()
-    )
+    computed = sum(v["score"] * v["weight"] for v in result.breakdown.values())
     assert abs(result.total - round(computed, 1)) < 0.1

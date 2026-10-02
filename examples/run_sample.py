@@ -3,6 +3,7 @@
 This script uses the RecommendationService with mocked adapters and the
 GoogleGenAIClient's fallback to demonstrate the flow without real API keys.
 """
+
 import os
 import sys
 from datetime import UTC, datetime
@@ -40,7 +41,7 @@ def pretty_print_model(m):
         try:
             print(m.model_dump_json(indent=2))
             return
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
     # older pydantic or fallback
@@ -54,7 +55,7 @@ def pretty_print_model(m):
                 # try without indent
                 print(m.json())
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     # dict-like
@@ -62,13 +63,20 @@ def pretty_print_model(m):
         if hasattr(m, "dict"):
             print(json.dumps(m.dict(), indent=2, default=str, ensure_ascii=False))
             return
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
     # fallback to __dict__ / str
     try:
-        print(json.dumps(getattr(m, "__dict__", str(m)), indent=2, default=str, ensure_ascii=False))
-    except Exception:
+        print(
+            json.dumps(
+                getattr(m, "__dict__", str(m)),
+                indent=2,
+                default=str,
+                ensure_ascii=False,
+            )
+        )
+    except Exception:  # noqa: BLE001
         print(str(m))
 
 

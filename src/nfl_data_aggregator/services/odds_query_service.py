@@ -69,13 +69,20 @@ class OddsQueryService:
         start = _parse_optional_datetime(commence_time_from, "commence_time_from")
         end = _parse_optional_datetime(commence_time_to, "commence_time_to")
         if start and end and start > end:
-            raise OddsQueryError("commence_time_from must not be after commence_time_to")
+            raise OddsQueryError(
+                "commence_time_from must not be after commence_time_to"
+            )
 
         cached = self.repo.list_events(
             sport_key, commence_from=start, commence_to=end, limit=limit
         )
-        newest_update = max((_as_utc(event.updated_at) for event in cached), default=None)
-        stale = newest_update is None or self._age_seconds(newest_update) >= self.ttl_seconds
+        newest_update = max(
+            (_as_utc(event.updated_at) for event in cached), default=None
+        )
+        stale = (
+            newest_update is None
+            or self._age_seconds(newest_update) >= self.ttl_seconds
+        )
         refresh = RefreshMetadata(force_requested=force)
 
         if force or stale:
@@ -97,7 +104,9 @@ class OddsQueryService:
                 self.session.rollback()
                 if force or not cached:
                     raise OddsQueryError(f"Odds event refresh failed: {exc}") from exc
-                refresh.warnings.append(f"Odds event refresh failed; returning cached events: {exc}")
+                refresh.warnings.append(
+                    f"Odds event refresh failed; returning cached events: {exc}"
+                )
 
         events = self.repo.list_events(
             sport_key, commence_from=start, commence_to=end, limit=limit
@@ -199,7 +208,9 @@ class OddsQueryService:
         snapshot_limit = _validate_limit(snapshot_limit)
         event = self.repo.get_event(event_id)
         if event is None or event.sport_key != sport_key:
-            raise OddsQueryError(f"Odds event {event_id} not found for sport {sport_key}")
+            raise OddsQueryError(
+                f"Odds event {event_id} not found for sport {sport_key}"
+            )
         start = _parse_optional_datetime(fetched_from, "fetched_from")
         end = _parse_optional_datetime(fetched_to, "fetched_to")
         if start and end and start > end:
@@ -218,12 +229,14 @@ class OddsQueryService:
         if books:
             line_conditions.append(OddsLine.bookmaker_key.in_(books))
         if participant:
-            line_conditions.append(OddsLine.participant.ilike(f"%{participant.strip()}%"))
+            line_conditions.append(
+                OddsLine.participant.ilike(f"%{participant.strip()}%")
+            )
         if line_conditions:
             stmt = stmt.join(OddsLine).where(*line_conditions).distinct()
-        stmt = stmt.order_by(OddsSnapshot.fetched_at.desc(), OddsSnapshot.id.desc()).limit(
-            snapshot_limit
-        )
+        stmt = stmt.order_by(
+            OddsSnapshot.fetched_at.desc(), OddsSnapshot.id.desc()
+        ).limit(snapshot_limit)
         snapshots = list(self.session.scalars(stmt).unique().all())
         return BettingLineHistoryResult(
             event=_event_record(event),
@@ -305,7 +318,9 @@ class OddsQueryService:
         if not isinstance(payload, dict):
             raise OddsAPIError("The Odds API event odds response must be an object")
         if str(payload.get("id") or "") != event_id:
-            raise OddsAPIError("The Odds API event odds response has an unexpected event id")
+            raise OddsAPIError(
+                "The Odds API event odds response has an unexpected event id"
+            )
         self._persist_events(sport_key, [payload])
         snapshot = self.repo.add_snapshot(
             event_id=event_id,
@@ -337,7 +352,9 @@ class OddsQueryService:
                 if not isinstance(market, dict) or not market.get("key"):
                     raise OddsAPIError("The Odds API returned a malformed market")
                 market_key = str(market["key"])
-                updated = _parse_optional_datetime(market.get("last_update"), "last_update")
+                updated = _parse_optional_datetime(
+                    market.get("last_update"), "last_update"
+                )
                 outcomes = market.get("outcomes", [])
                 if not isinstance(outcomes, list):
                     raise OddsAPIError("The Odds API returned malformed outcomes")
@@ -346,14 +363,24 @@ class OddsQueryService:
                         raise OddsAPIError("The Odds API returned a malformed outcome")
                     name = str(outcome.get("name") or "").strip()
                     if not name or outcome.get("price") is None:
-                        raise OddsAPIError("The Odds API returned an incomplete outcome")
+                        raise OddsAPIError(
+                            "The Odds API returned an incomplete outcome"
+                        )
                     try:
                         price = float(outcome["price"])
-                        point = float(outcome["point"]) if outcome.get("point") is not None else None
+                        point = (
+                            float(outcome["point"])
+                            if outcome.get("point") is not None
+                            else None
+                        )
                     except (TypeError, ValueError) as exc:
-                        raise OddsAPIError("The Odds API returned non-numeric odds") from exc
+                        raise OddsAPIError(
+                            "The Odds API returned non-numeric odds"
+                        ) from exc
                     participant = outcome.get("description")
-                    participant = str(participant).strip() if participant is not None else None
+                    participant = (
+                        str(participant).strip() if participant is not None else None
+                    )
                     player_id = None
                     if participant and market_key.startswith("player_"):
                         player_id = player_map.get(_normalize_name(participant))
@@ -384,7 +411,9 @@ class OddsQueryService:
         players = list(self.session.scalars(select(Player)).all())
         grouped: dict[str, list[str]] = {}
         for player in players:
-            grouped.setdefault(_normalize_name(player.name), []).append(player.player_id)
+            grouped.setdefault(_normalize_name(player.name), []).append(
+                player.player_id
+            )
         return {name: ids[0] for name, ids in grouped.items() if name and len(ids) == 1}
 
     def _match_local_game(
@@ -424,7 +453,9 @@ class OddsQueryService:
         return max(0.0, (self.now() - _as_utc(value)).total_seconds())
 
 
-def _request_signature(markets: list[str], regions: list[str], bookmakers: list[str]) -> str:
+def _request_signature(
+    markets: list[str], regions: list[str], bookmakers: list[str]
+) -> str:
     canonical = json.dumps(
         {
             "markets": sorted(markets),
@@ -447,7 +478,9 @@ def _event_record(event: OddsEvent) -> OddsEventRecord:
         home_team=event.home_team,
         away_team=event.away_team,
         game_id=event.game_id,
-        discovered_at=_as_utc(event.discovered_at).isoformat() if event.discovered_at else None,
+        discovered_at=_as_utc(event.discovered_at).isoformat()
+        if event.discovered_at
+        else None,
         updated_at=_as_utc(event.updated_at).isoformat() if event.updated_at else None,
     )
 
@@ -462,18 +495,25 @@ def _snapshot_record(
     markets_filter = set(market_keys or [])
     books_filter = set(bookmaker_keys or [])
     participant_filter = participant.strip().casefold() if participant else None
-    grouped: dict[tuple[str, str | None], dict[tuple[str, str | None], list[OddsLine]]] = {}
+    grouped: dict[
+        tuple[str, str | None], dict[tuple[str, str | None], list[OddsLine]]
+    ] = {}
     for line in snapshot.lines:
         if markets_filter and line.market_key not in markets_filter:
             continue
         if books_filter and line.bookmaker_key not in books_filter:
             continue
-        if participant_filter and participant_filter not in (line.participant or "").casefold():
+        if (
+            participant_filter
+            and participant_filter not in (line.participant or "").casefold()
+        ):
             continue
         book_key = (line.bookmaker_key, line.bookmaker_title)
         market_key = (
             line.market_key,
-            _as_utc(line.market_last_update).isoformat() if line.market_last_update else None,
+            _as_utc(line.market_last_update).isoformat()
+            if line.market_last_update
+            else None,
         )
         grouped.setdefault(book_key, {}).setdefault(market_key, []).append(line)
 
@@ -541,7 +581,7 @@ def _parse_datetime(value: Any, field: str) -> datetime:
     if not isinstance(value, str):
         raise OddsQueryError(f"{field} must be an ISO 8601 timestamp")
     try:
-        return _as_utc(datetime.fromisoformat(value.replace("Z", "+00:00")))
+        return _as_utc(datetime.fromisoformat(value))
     except ValueError as exc:
         raise OddsQueryError(f"{field} must be an ISO 8601 timestamp") from exc
 

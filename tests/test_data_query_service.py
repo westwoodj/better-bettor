@@ -18,34 +18,60 @@ def _summary(game_id="401000001", week=1, player_id="p1"):
             "date": "2026-09-13T17:00:00Z",
             "season": {"year": 2026, "type": 2},
             "week": {"number": week},
-            "competitions": [{
-                "status": {"type": {"completed": True}},
-                "competitors": [
-                    {"homeAway": "away", "score": "17", "team": {"abbreviation": "BUF"}},
-                    {"homeAway": "home", "score": "24", "team": {"abbreviation": "KC"}},
-                ],
-                "venue": {
-                    "fullName": "Arrowhead Stadium",
-                    "address": {"city": "Kansas City", "state": "MO", "country": "USA"},
-                },
-                "weather": {"temperature": 72, "windSpeed": 8, "displayValue": "Clear"},
-            }],
-        },
-        "boxscore": {"players": [{
-            "team": {"abbreviation": "KC"},
-            "statistics": [{
-                "name": "passing",
-                "labels": ["C/ATT", "YDS", "TD", "INT"],
-                "athletes": [{
-                    "athlete": {
-                        "id": player_id,
-                        "displayName": "Test Quarterback",
-                        "position": {"abbreviation": "QB"},
+            "competitions": [
+                {
+                    "status": {"type": {"completed": True}},
+                    "competitors": [
+                        {
+                            "homeAway": "away",
+                            "score": "17",
+                            "team": {"abbreviation": "BUF"},
+                        },
+                        {
+                            "homeAway": "home",
+                            "score": "24",
+                            "team": {"abbreviation": "KC"},
+                        },
+                    ],
+                    "venue": {
+                        "fullName": "Arrowhead Stadium",
+                        "address": {
+                            "city": "Kansas City",
+                            "state": "MO",
+                            "country": "USA",
+                        },
                     },
-                    "stats": ["20/30", "250", "2", "1"],
-                }],
-            }],
-        }]},
+                    "weather": {
+                        "temperature": 72,
+                        "windSpeed": 8,
+                        "displayValue": "Clear",
+                    },
+                }
+            ],
+        },
+        "boxscore": {
+            "players": [
+                {
+                    "team": {"abbreviation": "KC"},
+                    "statistics": [
+                        {
+                            "name": "passing",
+                            "labels": ["C/ATT", "YDS", "TD", "INT"],
+                            "athletes": [
+                                {
+                                    "athlete": {
+                                        "id": player_id,
+                                        "displayName": "Test Quarterback",
+                                        "position": {"abbreviation": "QB"},
+                                    },
+                                    "stats": ["20/30", "250", "2", "1"],
+                                }
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
     }
 
 
@@ -66,11 +92,15 @@ class PlayerRefreshClient:
 
 
 def test_cached_player_performances_do_not_call_network(session):
-    player = PlayerRepo(session).upsert("p1", espn_id="99", name="Test", team="KC", position="QB")
+    player = PlayerRepo(session).upsert(
+        "p1", espn_id="99", name="Test", team="KC", position="QB"
+    )
     game = GameRepo(session).upsert(
         "g1", season=2026, week=1, home_team="KC", away_team="BUF"
     )
-    StatsRepo(session).upsert(player.player_id, game.game_id, pass_yards=250, source="test")
+    StatsRepo(session).upsert(
+        player.player_id, game.game_id, pass_yards=250, source="test"
+    )
     session.commit()
 
     class NoNetwork:
@@ -83,7 +113,9 @@ def test_cached_player_performances_do_not_call_network(session):
 
 
 def test_force_player_season_propagates_and_persists(session):
-    PlayerRepo(session).upsert("p1", espn_id="99", name="Test", team="KC", position="QB")
+    PlayerRepo(session).upsert(
+        "p1", espn_id="99", name="Test", team="KC", position="QB"
+    )
     session.commit()
     client = PlayerRefreshClient()
 
@@ -99,13 +131,15 @@ def test_force_player_season_propagates_and_persists(session):
 
 
 def test_force_player_season_rolls_back_partial_refresh(session):
-    PlayerRepo(session).upsert("p1", espn_id="99", name="Test", team="KC", position="QB")
+    PlayerRepo(session).upsert(
+        "p1", espn_id="99", name="Test", team="KC", position="QB"
+    )
     session.commit()
 
     with pytest.raises(DataQueryError, match="ESPN refresh failed"):
-        DataQueryService(session, PlayerRefreshClient(fail_second=True)).get_player_performances(
-            "p1", season=2026, force=True
-        )
+        DataQueryService(
+            session, PlayerRefreshClient(fail_second=True)
+        ).get_player_performances("p1", season=2026, force=True)
 
     assert session.scalar(select(func.count()).select_from(Game)) == 0
 
@@ -121,10 +155,22 @@ class RosterClient:
         self.calls.append((team_id, force))
         return {
             "team": {"abbreviation": "KC"},
-            "athletes": [{"items": [
-                {"id": "qb1", "fullName": "Quarterback", "position": {"abbreviation": "QB"}},
-                {"id": "lb1", "fullName": "Linebacker", "position": {"abbreviation": "LB"}},
-            ]}],
+            "athletes": [
+                {
+                    "items": [
+                        {
+                            "id": "qb1",
+                            "fullName": "Quarterback",
+                            "position": {"abbreviation": "QB"},
+                        },
+                        {
+                            "id": "lb1",
+                            "fullName": "Linebacker",
+                            "position": {"abbreviation": "LB"},
+                        },
+                    ]
+                }
+            ],
         }
 
 

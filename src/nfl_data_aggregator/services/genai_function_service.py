@@ -1,6 +1,6 @@
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, ClassVar
 
 from ..adapters.espn_api import NFLClient
 from ..clients.google_genai_client import GoogleGenAIClient
@@ -20,14 +20,17 @@ class GenAIFunctionService:
 
     # Define a minimal function schema description (not used by the mocked client,
     # but useful for real clients that accept a functions schema)
-    FUNCTIONS_SCHEMA = [
+    FUNCTIONS_SCHEMA: ClassVar[list[dict[str, Any]]] = [
         {
             "name": "get_depth_chart",
             "description": "Return the depth chart for an NFL team",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "team_name": {"type": "string", "description": "Common team name or abbreviation"},
+                    "team_name": {
+                        "type": "string",
+                        "description": "Common team name or abbreviation",
+                    },
                     "year": {"type": "integer", "description": "Season year (YYYY)"},
                 },
                 "required": ["team_name"],
@@ -35,7 +38,11 @@ class GenAIFunctionService:
         }
     ]
 
-    def __init__(self, client: GoogleGenAIClient | None = None, nfl_client: NFLClient | None = None):
+    def __init__(
+        self,
+        client: GoogleGenAIClient | None = None,
+        nfl_client: NFLClient | None = None,
+    ):
         self.client = client or GoogleGenAIClient()
         self.nfl = nfl_client or NFLClient()
         self.depthsvc = DepthChartService(self.nfl)
@@ -46,7 +53,9 @@ class GenAIFunctionService:
 
         If no function call is produced, returns the textual model response.
         """
-        resp = self.client.call_with_functions(prompt=prompt, functions=self.FUNCTIONS_SCHEMA)
+        resp = self.client.call_with_functions(
+            prompt=prompt, functions=self.FUNCTIONS_SCHEMA
+        )
         # If model returned a function call, execute it
         func = resp.get("function_call")
         if not func:
@@ -56,7 +65,9 @@ class GenAIFunctionService:
         args = func.get("arguments") or {}
 
         if name == "get_depth_chart":
-            team_name = args.get("team_name") or args.get("team") or args.get("teamName")
+            team_name = (
+                args.get("team_name") or args.get("team") or args.get("teamName")
+            )
             year = args.get("year")
             if not team_name:
                 raise ValueError("function call did not include a team_name")
@@ -64,13 +75,22 @@ class GenAIFunctionService:
                 year = datetime.now(UTC).year
             try:
                 # Fetch raw depth chart JSON
-                data = self.nfl.depth_chart_for_team_name(team_name=team_name, year=year, force=force)
-            except Exception as exc:
-                logger.exception("Error fetching depth chart for %s (%s): %s", team_name, year, exc)
+                data = self.nfl.depth_chart_for_team_name(
+                    team_name=team_name, year=year, force=force
+                )
+            except Exception:
+                logger.exception(
+                    "Error fetching depth chart for %s (%s)", team_name, year
+                )
                 raise
 
             # Parse into per-schema DataFrames using DepthChartService
-            parsed = self.depthsvc.parse_depthchart(data=data, team_id=self.nfl.find_team_id(team_name) or None, year=year, force=force)
+            parsed = self.depthsvc.parse_depthchart(
+                data=data,
+                team_id=self.nfl.find_team_id(team_name) or None,
+                year=year,
+                force=force,
+            )
             return parsed
 
         # unknown function: return raw

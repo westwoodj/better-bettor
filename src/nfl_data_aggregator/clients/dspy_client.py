@@ -31,7 +31,9 @@ def configure_dspy_lm(
 
     # Build litellm-style model string
     if provider == "anthropic":
-        model_str = f"anthropic/{model}" if not model.startswith("anthropic/") else model
+        model_str = (
+            f"anthropic/{model}" if not model.startswith("anthropic/") else model
+        )
         api_key = api_key or settings.ANTHROPIC_API_KEY
     elif provider == "openai":
         model_str = f"openai/{model}" if not model.startswith("openai/") else model
@@ -41,7 +43,6 @@ def configure_dspy_lm(
         api_key = api_key or settings.GOOGLE_GENAI_API_KEY
     else:
         model_str = model
-        api_key = api_key
 
     kwargs = {"model": model_str, "temperature": temperature}
     if api_key:

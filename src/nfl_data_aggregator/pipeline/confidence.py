@@ -13,6 +13,7 @@ from .context_models import PredictionContext
 @dataclass
 class DataQualityScore:
     """Confidence score with component breakdown."""
+
     total: float = 0.0
     breakdown: dict = field(default_factory=dict)
 
@@ -153,9 +154,6 @@ class DataQualityConfidence:
         }
 
         # Compute weighted total
-        total = sum(
-            item["score"] * item["weight"]
-            for item in breakdown.values()
-        )
+        total = sum(item["score"] * item["weight"] for item in breakdown.values())
 
         return DataQualityScore(total=round(total, 1), breakdown=breakdown)

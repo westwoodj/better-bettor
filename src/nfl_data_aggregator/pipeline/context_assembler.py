@@ -79,29 +79,33 @@ class ContextAssembler:
             game = self.game_repo.get(stat.game_id)
             if game is None:
                 continue
-            opp = game.away_team if game.home_team == player_row.team else game.home_team
-            recent_games.append(GameStats(
-                game_id=stat.game_id,
-                week=game.week,
-                season=game.season,
-                opponent=opp,
-                pass_completions=stat.pass_completions,
-                pass_attempts=stat.pass_attempts,
-                pass_yards=stat.pass_yards,
-                pass_tds=stat.pass_tds,
-                interceptions=stat.interceptions,
-                passer_rating=stat.passer_rating,
-                rush_attempts=stat.rush_attempts,
-                rush_yards=stat.rush_yards,
-                rush_tds=stat.rush_tds,
-                receptions=stat.receptions,
-                targets=stat.targets,
-                receiving_yards=stat.receiving_yards,
-                receiving_tds=stat.receiving_tds,
-                fumbles=stat.fumbles,
-                fantasy_points=stat.fantasy_points,
-                source=stat.source or "",
-            ))
+            opp = (
+                game.away_team if game.home_team == player_row.team else game.home_team
+            )
+            recent_games.append(
+                GameStats(
+                    game_id=stat.game_id,
+                    week=game.week,
+                    season=game.season,
+                    opponent=opp,
+                    pass_completions=stat.pass_completions,
+                    pass_attempts=stat.pass_attempts,
+                    pass_yards=stat.pass_yards,
+                    pass_tds=stat.pass_tds,
+                    interceptions=stat.interceptions,
+                    passer_rating=stat.passer_rating,
+                    rush_attempts=stat.rush_attempts,
+                    rush_yards=stat.rush_yards,
+                    rush_tds=stat.rush_tds,
+                    receptions=stat.receptions,
+                    targets=stat.targets,
+                    receiving_yards=stat.receiving_yards,
+                    receiving_tds=stat.receiving_tds,
+                    fumbles=stat.fumbles,
+                    fantasy_points=stat.fantasy_points,
+                    source=stat.source or "",
+                )
+            )
 
         # Sort by week
         recent_games.sort(key=lambda g: g.week)
@@ -110,7 +114,9 @@ class ContextAssembler:
         averages = self._compute_averages(recent_games)
 
         # Matchup context (defense profile)
-        matchup = self._build_matchup(game_id, opponent, home_away, season, game_row.week)
+        matchup = self._build_matchup(
+            game_id, opponent, home_away, season, game_row.week
+        )
 
         # Game environment
         environment = GameEnvironment(
@@ -174,8 +180,9 @@ class ContextAssembler:
             total_receiving_yards=_sum("receiving_yards"),
         )
 
-    def _verify_roster(self, player_name: str, espn_id: str | None,
-                       team: str | None, game_row) -> tuple[bool, list[str]]:
+    def _verify_roster(
+        self, player_name: str, espn_id: str | None, team: str | None, game_row
+    ) -> tuple[bool, list[str]]:
         """Verify the player is on a current roster for this game.
 
         Checks BOTH teams' ESPN rosters (home and away) by ID and name.
@@ -204,9 +211,7 @@ class ContextAssembler:
                     continue
 
                 roster_data = self._espn_client.roster(team_id, force=True)
-                match = self._find_player_in_roster(
-                    roster_data, espn_id, player_name
-                )
+                match = self._find_player_in_roster(roster_data, espn_id, player_name)
 
                 if match is not None:
                     matched_id, matched_name, match_type = match
@@ -215,7 +220,9 @@ class ContextAssembler:
                         if match_type == "id":
                             logger.info(
                                 "Roster verified: %s (ESPN %s) on %s",
-                                player_name, espn_id, check_team,
+                                player_name,
+                                espn_id,
+                                check_team,
                             )
                             return True, warnings
                         else:
@@ -234,7 +241,7 @@ class ContextAssembler:
                         )
                         return False, warnings
 
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 logger.warning(
                     "ESPN roster check failed for team %s: %s", check_team, exc
                 )
@@ -283,8 +290,9 @@ class ContextAssembler:
 
         return name_match
 
-    def _build_matchup(self, game_id: str, opponent: str, home_away: str,
-                       season: int, week: int) -> MatchupContext:
+    def _build_matchup(
+        self, game_id: str, opponent: str, home_away: str, season: int, week: int
+    ) -> MatchupContext:
         """Build matchup context from defense profile data."""
         matchup = MatchupContext(
             game_id=game_id,

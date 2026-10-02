@@ -22,12 +22,33 @@ def _make_context():
     return PredictionContext(
         player=PlayerProfile(player_id="p1", name="Test QB", team="KC", position="QB"),
         recent_games=[
-            GameStats(game_id="g1", week=1, season=2025, opponent="DET",
-                      pass_yards=280, pass_tds=3, rush_yards=25),
-            GameStats(game_id="g2", week=2, season=2025, opponent="CIN",
-                      pass_yards=310, pass_tds=2, rush_yards=30),
-            GameStats(game_id="g3", week=3, season=2025, opponent="ATL",
-                      pass_yards=260, pass_tds=1, rush_yards=18),
+            GameStats(
+                game_id="g1",
+                week=1,
+                season=2025,
+                opponent="DET",
+                pass_yards=280,
+                pass_tds=3,
+                rush_yards=25,
+            ),
+            GameStats(
+                game_id="g2",
+                week=2,
+                season=2025,
+                opponent="CIN",
+                pass_yards=310,
+                pass_tds=2,
+                rush_yards=30,
+            ),
+            GameStats(
+                game_id="g3",
+                week=3,
+                season=2025,
+                opponent="ATL",
+                pass_yards=260,
+                pass_tds=1,
+                rush_yards=18,
+            ),
         ],
         season_averages=SeasonAverages(
             games_played=3,
@@ -79,7 +100,10 @@ def test_verify_claims_fabricated_average():
     violations = checker.verify_claims(claims, context)
 
     assert len(violations) > 0
-    assert any("average" in v.reason.lower() or "differs" in v.reason.lower() for v in violations)
+    assert any(
+        "average" in v.reason.lower() or "differs" in v.reason.lower()
+        for v in violations
+    )
 
 
 def test_verify_claims_correct_average():

@@ -35,3 +35,10 @@ package = false
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI dependency injection idiom: Depends() in argument defaults
+extend-immutable-calls = ["fastapi.Depends"]
+
+[tool.ruff.format]
+line-ending = "lf"

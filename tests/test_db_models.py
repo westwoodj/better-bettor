@@ -4,6 +4,8 @@ import os
 import sys
 from datetime import UTC, datetime
 
+from sqlalchemy.exc import IntegrityError
+
 ROOT = os.path.dirname(os.path.dirname(__file__))
 SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
@@ -27,8 +29,15 @@ def test_all_tables_created(engine):
     """Verify all expected tables are created."""
     tables = Base.metadata.tables.keys()
     expected = {
-        "players", "games", "player_game_stats", "prop_lines", "predictions",
-        "defense_profiles", "odds_events", "odds_snapshots", "odds_lines",
+        "players",
+        "games",
+        "player_game_stats",
+        "prop_lines",
+        "predictions",
+        "defense_profiles",
+        "odds_events",
+        "odds_snapshots",
+        "odds_lines",
     }
     assert expected.issubset(tables)
 
@@ -60,8 +69,11 @@ def test_player_game_stats_composite_key(session):
     session.commit()
 
     stats = PlayerGameStats(
-        player_id="p1", game_id="g1",
-        pass_yards=300, pass_tds=3, source="test",
+        player_id="p1",
+        game_id="g1",
+        pass_yards=300,
+        pass_tds=3,
+        source="test",
     )
     session.add(stats)
     session.commit()
@@ -90,7 +102,8 @@ def test_prediction_auto_increment(session):
     session.commit()
 
     pred = Prediction(
-        player_id="p1", game_id="g1",
+        player_id="p1",
+        game_id="g1",
         predicted_stats={"pass_yards": {"expected": 280}},
         confidence_score=75.0,
     )
@@ -108,7 +121,7 @@ def test_defense_profile_unique_constraint(session):
 
     dp2 = DefenseProfile(team="BUF", season=2025, week_through=5, source="nflverse")
     session.add(dp2)
-    with pytest.raises(Exception):
+    with pytest.raises(IntegrityError):
         session.commit()
 
 
@@ -152,16 +165,24 @@ def test_odds_snapshot_preserves_repeated_fetches(session):
     )
     session.add_all([first, second])
     session.flush()
-    session.add_all([
-        OddsLine(
-            snapshot_id=first.id, bookmaker_key="book", market_key="h2h",
-            outcome_name="Kansas City Chiefs", price=-110,
-        ),
-        OddsLine(
-            snapshot_id=second.id, bookmaker_key="book", market_key="h2h",
-            outcome_name="Kansas City Chiefs", price=-110,
-        ),
-    ])
+    session.add_all(
+        [
+            OddsLine(
+                snapshot_id=first.id,
+                bookmaker_key="book",
+                market_key="h2h",
+                outcome_name="Kansas City Chiefs",
+                price=-110,
+            ),
+            OddsLine(
+                snapshot_id=second.id,
+                bookmaker_key="book",
+                market_key="h2h",
+                outcome_name="Kansas City Chiefs",
+                price=-110,
+            ),
+        ]
+    )
     session.commit()
     assert first.id != second.id
     assert len(event.snapshots) == 2

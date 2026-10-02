@@ -54,7 +54,7 @@ def health() -> HealthResult:
     try:
         session.execute(text("SELECT 1"))
         return HealthResult(status="ok", database="ok")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("Health check database failure: %s", exc)
         return HealthResult(
             status="degraded", database="error", detail=type(exc).__name__

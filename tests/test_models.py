@@ -13,4 +13,3 @@ def test_matchup_and_recommendation_flow():
     assert resp.raw_text is not None
     # parsed may be None if parsing failed, but raw_text should contain "Recommendation" in the scaffold mock
     assert "Recommendation" in resp.raw_text or resp.parsed is not None
-

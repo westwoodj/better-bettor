@@ -17,7 +17,9 @@ class GoogleGenAIClient:
 
     def __init__(self, api_key: str | None = None, model: str | None = None):
         self.api_key = api_key or os.environ.get("GOOGLE_GENAI_API_KEY")
-        self.model = model or os.environ.get("GOOGLE_GENAI_MODEL", "models/text-bison-001")
+        self.model = model or os.environ.get(
+            "GOOGLE_GENAI_MODEL", "models/text-bison-001"
+        )
         self._client = None
 
     def _ensure_client(self) -> bool:
@@ -29,12 +31,14 @@ class GoogleGenAIClient:
             # Keep module reference for later use
             self._client = gg
             return True
-        except Exception as exc:  # ImportError or any other issue
+        except Exception as exc:  # ImportError or any other issue  # noqa: BLE001
             logger.debug("google_genai import failed: %s", exc)
             self._client = None
             return False
 
-    def generate_text(self, prompt: str, temperature: float = 0.0, max_output_tokens: int = 512) -> dict[str, Any]:
+    def generate_text(
+        self, prompt: str, temperature: float = 0.0, max_output_tokens: int = 512
+    ) -> dict[str, Any]:
         """Generate text from the model.
 
         Returns a dict containing at least 'raw_text'. If the real client is
@@ -47,14 +51,24 @@ class GoogleGenAIClient:
                 if hasattr(gg, "Client"):
                     client = gg.Client()
                     if hasattr(client, "generate_text"):
-                        resp = client.generate_text(model=self.model, prompt=prompt, temperature=temperature, max_output_tokens=max_output_tokens)
+                        resp = client.generate_text(
+                            model=self.model,
+                            prompt=prompt,
+                            temperature=temperature,
+                            max_output_tokens=max_output_tokens,
+                        )
                         return {"raw_text": str(resp)}
                 # fallback to module-level generate_text
                 if hasattr(gg, "generate_text"):
-                    resp = gg.generate_text(model=self.model, prompt=prompt, temperature=temperature, max_output_tokens=max_output_tokens)
+                    resp = gg.generate_text(
+                        model=self.model,
+                        prompt=prompt,
+                        temperature=temperature,
+                        max_output_tokens=max_output_tokens,
+                    )
                     return {"raw_text": str(resp)}
-            except Exception as exc:
-                logger.exception("Error calling google-genai client: %s", exc)
+            except Exception:
+                logger.exception("Error calling google-genai client")
                 # fall through to mocked response
 
         # Mocked/default response when real client is unavailable or failed.
@@ -73,6 +87,7 @@ class GoogleGenAIClient:
 
         Returns {'name': ..., 'arguments': {...}} or None.
         """
+
         # Helper to normalize argument string -> dict
         def _parse_args(a):
             if a is None:
@@ -82,7 +97,7 @@ class GoogleGenAIClient:
             if isinstance(a, str):
                 try:
                     return json.loads(a)
-                except Exception:
+                except Exception:  # noqa: BLE001
                     # some clients may provide a simple key=value string; best-effort skip
                     return {}
             return {}
@@ -108,17 +123,30 @@ class GoogleGenAIClient:
                         if isinstance(c, dict):
                             tctype = c.get("type")
                             if tctype and tctype in ("tool_call", "function_call"):
-                                tc = c.get("tool_call") or c.get("function_call") or c.get("toolCall")
+                                tc = (
+                                    c.get("tool_call")
+                                    or c.get("function_call")
+                                    or c.get("toolCall")
+                                )
                                 if isinstance(tc, dict):
                                     name = tc.get("name")
                                     args = tc.get("arguments") or tc.get("args")
-                                    return {"name": name, "arguments": _parse_args(args)}
+                                    return {
+                                        "name": name,
+                                        "arguments": _parse_args(args),
+                                    }
                         else:
                             # object-like c
-                            tc = getattr(c, "tool_call", None) or getattr(c, "function_call", None) or getattr(c, "toolCall", None)
+                            tc = (
+                                getattr(c, "tool_call", None)
+                                or getattr(c, "function_call", None)
+                                or getattr(c, "toolCall", None)
+                            )
                             if tc:
                                 name = getattr(tc, "name", None)
-                                args = getattr(tc, "arguments", None) or getattr(tc, "args", None)
+                                args = getattr(tc, "arguments", None) or getattr(
+                                    tc, "args", None
+                                )
                                 return {"name": name, "arguments": _parse_args(args)}
 
             # 2) Candidates: resp.candidates or resp.candidates[0].content
@@ -126,7 +154,11 @@ class GoogleGenAIClient:
             if cand:
                 for candidate in cand:
                     # candidate may have content list
-                    content = getattr(candidate, "content", None) or getattr(candidate, "message", None) or (candidate if isinstance(candidate, dict) else None)
+                    content = (
+                        getattr(candidate, "content", None)
+                        or getattr(candidate, "message", None)
+                        or (candidate if isinstance(candidate, dict) else None)
+                    )
                     if isinstance(content, dict) and content.get("function_call"):
                         fc = content.get("function_call")
                         name = fc.get("name")
@@ -141,8 +173,16 @@ class GoogleGenAIClient:
                         else:
                             fc = getattr(msg, "function_call", None)
                         if fc:
-                            name = fc.get("name") if isinstance(fc, dict) else getattr(fc, "name", None)
-                            args = fc.get("arguments") if isinstance(fc, dict) else getattr(fc, "arguments", None)
+                            name = (
+                                fc.get("name")
+                                if isinstance(fc, dict)
+                                else getattr(fc, "name", None)
+                            )
+                            args = (
+                                fc.get("arguments")
+                                if isinstance(fc, dict)
+                                else getattr(fc, "arguments", None)
+                            )
                             return {"name": name, "arguments": _parse_args(args)}
 
             # 3) OpenAI-like structure: dict with 'choices' -> message -> function_call
@@ -173,14 +213,20 @@ class GoogleGenAIClient:
                     name = m.group(1)
                     try:
                         args = json.loads(m.group(2))
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         args = {}
                     return {"name": name, "arguments": args}
-        except Exception as exc:
-            logger.exception("Error parsing function call from payload: %s", exc)
+        except Exception:
+            logger.exception("Error parsing function call from payload")
         return None
 
-    def call_with_functions(self, prompt: str, functions: list | None = None, temperature: float = 0.0, max_output_tokens: int = 1024) -> dict[str, Any]:
+    def call_with_functions(
+        self,
+        prompt: str,
+        functions: list | None = None,
+        temperature: float = 0.0,
+        max_output_tokens: int = 1024,
+    ) -> dict[str, Any]:
         """Call the model and allow it to return a function call instruction.
 
         Returns a dict with keys:
@@ -200,7 +246,11 @@ class GoogleGenAIClient:
                 if hasattr(gg, "ResponsesClient"):
                     client = gg.ResponsesClient()
                     # The client may accept either keyword args or a request object
-                    request = {"model": self.model, "input": prompt, "temperature": temperature}
+                    request = {
+                        "model": self.model,
+                        "input": prompt,
+                        "temperature": temperature,
+                    }
                     if functions is not None:
                         request["functions"] = functions
                     # defensive call patterns
@@ -212,7 +262,7 @@ class GoogleGenAIClient:
                         except TypeError:
                             try:
                                 resp = client.generate(request=request)
-                            except Exception:
+                            except Exception:  # noqa: BLE001
                                 resp = None
                     # If we got a response, try to extract a function call in multiple ways
                     if resp is not None:
@@ -226,11 +276,13 @@ class GoogleGenAIClient:
                                 if hasattr(resp, "to_dict"):
                                     try:
                                         resp_dict = resp.to_dict()
-                                    except Exception:
+                                    except Exception:  # noqa: BLE001
                                         resp_dict = None
                                 if resp_dict:
-                                    parsed = self._parse_function_call_from_payload(resp_dict)
-                            except Exception:
+                                    parsed = self._parse_function_call_from_payload(
+                                        resp_dict
+                                    )
+                            except Exception:  # noqa: BLE001
                                 parsed = None
                         # If parsed, return consistent structure. Also include text if available.
                         raw_text = ""
@@ -242,22 +294,44 @@ class GoogleGenAIClient:
                                 if outs:
                                     first = outs[0]
                                     # first may contain content list with text items
-                                    content = getattr(first, "content", None) or (first.get("content") if isinstance(first, dict) else None)
+                                    content = getattr(first, "content", None) or (
+                                        first.get("content")
+                                        if isinstance(first, dict)
+                                        else None
+                                    )
                                     if content:
                                         for c in content:
-                                            if isinstance(c, dict) and c.get("type") == "output_text":
+                                            if (
+                                                isinstance(c, dict)
+                                                and c.get("type") == "output_text"
+                                            ):
                                                 raw_text = c.get("text") or raw_text
-                                            elif isinstance(c, dict) and c.get("type") == "message":
+                                            elif (
+                                                isinstance(c, dict)
+                                                and c.get("type") == "message"
+                                            ):
                                                 raw_text = raw_text or c.get("text")
                                             else:
                                                 # try object
-                                                raw_text = raw_text or getattr(c, "text", None) or raw_text
+                                                raw_text = (
+                                                    raw_text
+                                                    or getattr(c, "text", None)
+                                                    or raw_text
+                                                )
                             if not raw_text and hasattr(resp, "candidates"):
                                 cands = resp.candidates
                                 if cands:
                                     cand = cands[0]
-                                    raw_text = getattr(cand, "content", None) or getattr(cand, "text", None) or (cand.get("text") if isinstance(cand, dict) else "")
-                        except Exception:
+                                    raw_text = (
+                                        getattr(cand, "content", None)
+                                        or getattr(cand, "text", None)
+                                        or (
+                                            cand.get("text")
+                                            if isinstance(cand, dict)
+                                            else ""
+                                        )
+                                    )
+                        except Exception:  # noqa: BLE001
                             raw_text = ""
 
                         out = {"raw_text": raw_text}
@@ -274,9 +348,9 @@ class GoogleGenAIClient:
                             return {"raw_text": "", "function_call": parsed}
                         return {"raw_text": str(resp)}
                     except Exception:
-                        pass
-            except Exception as exc:
-                logger.exception("Error calling google-genai function call API: %s", exc)
+                        logger.debug("Ignoring recoverable error", exc_info=True)
+            except Exception:
+                logger.exception("Error calling google-genai function call API")
 
         # Mocked function-call behavior when real client isn't available or didn't return a function call.
         lower = prompt.lower()
@@ -284,10 +358,16 @@ class GoogleGenAIClient:
             # crude extraction: try to find a team name and optional year
             import re
 
-            team_match = re.search(r"(?:for|of|get\s)?\s*([A-Za-z ]+?)\s+(?:depth chart|depthchart)", prompt, re.IGNORECASE)
+            team_match = re.search(
+                r"(?:for|of|get\s)?\s*([A-Za-z ]+?)\s+(?:depth chart|depthchart)",
+                prompt,
+                re.IGNORECASE,
+            )
             if not team_match:
                 # try to capture leading team name e.g. 'get Cardinals depth chart'
-                team_match = re.search(r"get\s+([A-Za-z ]+?)\s+depth", prompt, re.IGNORECASE)
+                team_match = re.search(
+                    r"get\s+([A-Za-z ]+?)\s+depth", prompt, re.IGNORECASE
+                )
 
             team_name = team_match.group(1).strip() if team_match else ""
 
@@ -296,7 +376,7 @@ class GoogleGenAIClient:
 
             func_call = {
                 "name": "get_depth_chart",
-                "arguments": {"team_name": team_name, "year": year}
+                "arguments": {"team_name": team_name, "year": year},
             }
             return {"raw_text": "", "function_call": func_call}
 

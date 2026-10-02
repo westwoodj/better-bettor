@@ -26,28 +26,40 @@ EVENT = {
 def odds_payload():
     return {
         **EVENT,
-        "bookmakers": [{
-            "key": "draftkings",
-            "title": "DraftKings",
-            "markets": [
-                {
-                    "key": "h2h",
-                    "last_update": "2026-09-20T12:00:00Z",
-                    "outcomes": [
-                        {"name": "Kansas City Chiefs", "price": -135},
-                        {"name": "Buffalo Bills", "price": 115},
-                    ],
-                },
-                {
-                    "key": "player_pass_yds",
-                    "last_update": "2026-09-20T12:01:00Z",
-                    "outcomes": [
-                        {"name": "Over", "description": "Patrick Mahomes", "price": -110, "point": 275.5},
-                        {"name": "Under", "description": "Patrick Mahomes", "price": -110, "point": 275.5},
-                    ],
-                },
-            ],
-        }],
+        "bookmakers": [
+            {
+                "key": "draftkings",
+                "title": "DraftKings",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "last_update": "2026-09-20T12:00:00Z",
+                        "outcomes": [
+                            {"name": "Kansas City Chiefs", "price": -135},
+                            {"name": "Buffalo Bills", "price": 115},
+                        ],
+                    },
+                    {
+                        "key": "player_pass_yds",
+                        "last_update": "2026-09-20T12:01:00Z",
+                        "outcomes": [
+                            {
+                                "name": "Over",
+                                "description": "Patrick Mahomes",
+                                "price": -110,
+                                "point": 275.5,
+                            },
+                            {
+                                "name": "Under",
+                                "description": "Patrick Mahomes",
+                                "price": -110,
+                                "point": 275.5,
+                            },
+                        ],
+                    },
+                ],
+            }
+        ],
     }
 
 
@@ -102,7 +114,7 @@ def test_fetch_persists_snapshot_lines_quota_and_links(session):
         week=3,
         home_team="KC",
         away_team="BUF",
-        kickoff_time=datetime(2026, 9, 20, 17, 0),
+        kickoff_time=datetime(2026, 9, 20, 17, 0, tzinfo=UTC),
     )
     PlayerRepo(session).upsert("p1", name="Patrick Mahomes", team="KC", position="QB")
     session.commit()
@@ -119,17 +131,23 @@ def test_fetch_persists_snapshot_lines_quota_and_links(session):
     assert result.snapshot.outcome_count == 4
     assert result.snapshot.quota.last == 2
     assert session.scalar(select(func.count()).select_from(OddsSnapshot)) == 1
-    player_lines = list(session.scalars(
-        select(OddsLine).where(OddsLine.market_key == "player_pass_yds")
-    ))
+    player_lines = list(
+        session.scalars(
+            select(OddsLine).where(OddsLine.market_key == "player_pass_yds")
+        )
+    )
     assert {line.player_id for line in player_lines} == {"p1"}
 
 
 def test_fresh_cache_then_force_creates_distinct_snapshot(session):
     client = Client()
     query = service(session, client)
-    first = query.get_betting_lines("americanfootball_nfl", "event-1", market_keys=["h2h"])
-    cached = query.get_betting_lines("americanfootball_nfl", "event-1", market_keys=["h2h"])
+    first = query.get_betting_lines(
+        "americanfootball_nfl", "event-1", market_keys=["h2h"]
+    )
+    cached = query.get_betting_lines(
+        "americanfootball_nfl", "event-1", market_keys=["h2h"]
+    )
     forced = query.get_betting_lines(
         "americanfootball_nfl", "event-1", market_keys=["h2h"], force=True
     )
@@ -152,10 +170,14 @@ def test_expired_refresh_failure_returns_stale_but_force_fails(session):
     client = Client()
     clock = Clock()
     query = service(session, client, clock)
-    first = query.get_betting_lines("americanfootball_nfl", "event-1", market_keys=["h2h"])
+    first = query.get_betting_lines(
+        "americanfootball_nfl", "event-1", market_keys=["h2h"]
+    )
     clock.value += timedelta(seconds=901)
     client.fail_odds = True
-    stale = query.get_betting_lines("americanfootball_nfl", "event-1", market_keys=["h2h"])
+    stale = query.get_betting_lines(
+        "americanfootball_nfl", "event-1", market_keys=["h2h"]
+    )
     assert stale.snapshot.snapshot_id == first.snapshot.snapshot_id
     assert stale.cache.stale is True
     assert "returning stale snapshot" in stale.cache.warnings[0]
@@ -179,10 +201,12 @@ def test_failed_initial_refresh_rolls_back_snapshot(session):
 def test_malformed_payload_rolls_back_partial_lines(session):
     client = Client()
     client.payload = odds_payload()
-    client.payload["bookmakers"][0]["markets"].append({
-        "key": "totals",
-        "outcomes": [{"name": "Over", "price": "not-a-number", "point": 47.5}],
-    })
+    client.payload["bookmakers"][0]["markets"].append(
+        {
+            "key": "totals",
+            "outcomes": [{"name": "Over", "price": "not-a-number", "point": 47.5}],
+        }
+    )
     with pytest.raises(OddsQueryError, match="non-numeric odds"):
         service(session, client).get_betting_lines(
             "americanfootball_nfl", "event-1", market_keys=["h2h", "totals"]
@@ -243,7 +267,7 @@ def test_ambiguous_local_game_is_not_linked(session):
             week=3,
             home_team="KC",
             away_team="BUF",
-            kickoff_time=datetime(2026, 9, 20, hour, 0),
+            kickoff_time=datetime(2026, 9, 20, hour, 0, tzinfo=UTC),
         )
     session.commit()
     result = service(session).list_events("americanfootball_nfl", force=True)

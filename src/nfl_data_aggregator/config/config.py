@@ -4,12 +4,13 @@ import os
 try:
     from pydantic import ConfigDict, Field
     from pydantic_settings import BaseSettings
+
     _HAS_PYDANTIC_V2 = True
-except Exception:
+except Exception:  # noqa: BLE001
     _HAS_PYDANTIC_V2 = False
     try:
         from pydantic import BaseSettings, Field
-    except Exception:
+    except Exception:  # noqa: BLE001
         BaseSettings = object
 
         def Field(default=None, env: str | None = None, **kwargs):
@@ -20,7 +21,9 @@ class Settings(BaseSettings):
     # Google GenAI API key (or path to credential file depending on your setup)
     GOOGLE_GENAI_API_KEY: str | None = os.environ.get("GOOGLE_GENAI_API_KEY")
     # default model to use
-    GOOGLE_GENAI_MODEL: str = os.environ.get("GOOGLE_GENAI_MODEL", "models/text-bison-001")
+    GOOGLE_GENAI_MODEL: str = os.environ.get(
+        "GOOGLE_GENAI_MODEL", "models/text-bison-001"
+    )
 
     # Example adapters keys (placeholders)
     SPORTS_DATA_API_KEY: str | None = os.environ.get("SPORTS_DATA_API_KEY")
@@ -36,8 +39,12 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str | None = os.environ.get("ANTHROPIC_API_KEY")
     OPENAI_API_KEY: str | None = os.environ.get("OPENAI_API_KEY")
     DSPY_MODEL: str = os.environ.get("DSPY_MODEL", "claude-sonnet-4-20250514")
-    DSPY_TEMPERATURE_ANALYSIS: float = float(os.environ.get("DSPY_TEMPERATURE_ANALYSIS", "0.3"))
-    DSPY_TEMPERATURE_PREDICTION: float = float(os.environ.get("DSPY_TEMPERATURE_PREDICTION", "0.1"))
+    DSPY_TEMPERATURE_ANALYSIS: float = float(
+        os.environ.get("DSPY_TEMPERATURE_ANALYSIS", "0.3")
+    )
+    DSPY_TEMPERATURE_PREDICTION: float = float(
+        os.environ.get("DSPY_TEMPERATURE_PREDICTION", "0.1")
+    )
 
     # NFL data
     NFL_SEASON: int = int(os.environ.get("NFL_SEASON", "2025"))
@@ -45,6 +52,7 @@ class Settings(BaseSettings):
     if _HAS_PYDANTIC_V2:
         model_config = ConfigDict(env_file=".env")
     else:
+
         class Config:
             env_file = ".env"
 

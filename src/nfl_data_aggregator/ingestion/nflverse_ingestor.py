@@ -92,9 +92,21 @@ class NflverseIngestor:
             if not game_id:
                 game_id = f"{season}_{week_num}_{w.get('team', 'UNK')}"
 
-            stat_data = {k: v for k, v in w.items()
-                         if k not in ("nflverse_id", "name", "team", "position", "week", "season", "source")
-                         and v is not None}
+            stat_data = {
+                k: v
+                for k, v in w.items()
+                if k
+                not in (
+                    "nflverse_id",
+                    "name",
+                    "team",
+                    "position",
+                    "week",
+                    "season",
+                    "source",
+                )
+                and v is not None
+            }
             stat_data["source"] = "nflverse"
 
             self.stats_repo.upsert(player_id, game_id, **stat_data)
@@ -115,7 +127,6 @@ class NflverseIngestor:
 
         count = 0
         # Get all teams that played
-        games = self.game_repo.find_by_week(season, 1)  # Start from any week to get teams
         teams = set()
         all_games = []
         for wk in range(1, through_week + 1):
@@ -137,30 +148,40 @@ class NflverseIngestor:
                     game_count += 1
                     # Opponent stats from game
                     opponent_team = g.away_team if g.home_team == team else g.home_team
-                    opp_stats = self.session.execute(
-                        select(PlayerGameStats).where(
-                            PlayerGameStats.game_id == g.game_id,
-                        ).join(
-                            # Only include opponent players
-                            # Since we don't have team on stats, use player table
-                            PlayerGameStats.player
+                    opp_stats = (
+                        self.session.execute(
+                            select(PlayerGameStats)
+                            .where(
+                                PlayerGameStats.game_id == g.game_id,
+                            )
+                            .join(
+                                # Only include opponent players
+                                # Since we don't have team on stats, use player table
+                                PlayerGameStats.player
+                            )
                         )
-                    ).scalars().all()
+                        .scalars()
+                        .all()
+                    )
 
                     for s in opp_stats:
                         if s.player and s.player.team == opponent_team:
-                            total_pass_yds += (s.pass_yards or 0)
-                            total_rush_yds += (s.rush_yards or 0)
+                            total_pass_yds += s.pass_yards or 0
+                            total_rush_yds += s.rush_yards or 0
 
                     # Parse score for points allowed
                     if g.final_score:
                         try:
                             parts = g.final_score.split("-")
                             if g.home_team == team:
-                                total_points += float(parts[1])  # away score = points allowed
+                                total_points += float(
+                                    parts[1]
+                                )  # away score = points allowed
                             else:
-                                total_points += float(parts[0])  # home score = points allowed
-                        except (ValueError, IndexError):
+                                total_points += float(
+                                    parts[0]
+                                )  # home score = points allowed
+                        except ValueError, IndexError:
                             pass
 
             if game_count > 0:
@@ -176,7 +197,11 @@ class NflverseIngestor:
                 count += 1
 
         self.session.commit()
-        logger.info("Defense profiles computed for %d teams through week %d", count, through_week)
+        logger.info(
+            "Defense profiles computed for %d teams through week %d",
+            count,
+            through_week,
+        )
         return count
 
     def _find_game_id(self, team: str, season: int, week: int | None) -> str | None:

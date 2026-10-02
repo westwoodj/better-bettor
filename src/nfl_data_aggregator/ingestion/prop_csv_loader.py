@@ -49,7 +49,9 @@ class PropCSVLoader:
                         # Fuzzy match player name to player_id
                         player = self.player_repo.find_by_name_fuzzy(player_name)
                         if player is None:
-                            logger.warning("No player match for '%s', skipping", player_name)
+                            logger.warning(
+                                "No player match for '%s', skipping", player_name
+                            )
                             counts["skipped"] += 1
                             continue
 
@@ -90,5 +92,5 @@ def _safe_float(val) -> float | None:
         return None
     try:
         return float(val)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None

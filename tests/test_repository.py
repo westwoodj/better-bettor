@@ -20,7 +20,7 @@ from nfl_data_aggregator.db.repository import (
 
 def test_player_upsert_creates(session):
     repo = PlayerRepo(session)
-    player = repo.upsert("p1", name="John Doe", team="KC", position="QB")
+    repo.upsert("p1", name="John Doe", team="KC", position="QB")
     session.commit()
 
     fetched = repo.get("p1")

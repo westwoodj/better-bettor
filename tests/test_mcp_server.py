@@ -21,34 +21,38 @@ def test_mcp_stdio_lists_tools_and_returns_concise_validation_error(tmp_path):
     )
 
     async def exercise():
-        async with stdio_client(params) as (read_stream, write_stream):
-            async with ClientSession(read_stream, write_stream) as session:
-                await session.initialize()
-                listing = await session.list_tools()
-                names = {tool.name for tool in listing.tools}
-                assert names == {
-                    "health",
-                    "get_cache_status",
-                    "search_players",
-                    "get_player_performances",
-                    "list_games",
-                    "get_game_context",
-                    "get_roster",
-                    "list_odds_events",
-                    "get_betting_lines",
-                    "get_betting_line_history",
-                }
-                cache_tool = next(tool for tool in listing.tools if tool.name == "get_cache_status")
-                assert "record_counts" in cache_tool.outputSchema["properties"]
-                health = await session.call_tool("health", {})
-                assert health.isError is False
-                assert health.structuredContent["status"] == "ok"
-                assert health.structuredContent["database"] == "ok"
-                result = await session.call_tool(
-                    "list_games", {"season": 2026, "force": True}
-                )
-                assert result.isError is True
-                text = " ".join(getattr(item, "text", "") for item in result.content)
-                assert "week is required" in text
+        async with (
+            stdio_client(params) as (read_stream, write_stream),
+            ClientSession(read_stream, write_stream) as session,
+        ):
+            await session.initialize()
+            listing = await session.list_tools()
+            names = {tool.name for tool in listing.tools}
+            assert names == {
+                "health",
+                "get_cache_status",
+                "search_players",
+                "get_player_performances",
+                "list_games",
+                "get_game_context",
+                "get_roster",
+                "list_odds_events",
+                "get_betting_lines",
+                "get_betting_line_history",
+            }
+            cache_tool = next(
+                tool for tool in listing.tools if tool.name == "get_cache_status"
+            )
+            assert "record_counts" in cache_tool.outputSchema["properties"]
+            health = await session.call_tool("health", {})
+            assert health.isError is False
+            assert health.structuredContent["status"] == "ok"
+            assert health.structuredContent["database"] == "ok"
+            result = await session.call_tool(
+                "list_games", {"season": 2026, "force": True}
+            )
+            assert result.isError is True
+            text = " ".join(getattr(item, "text", "") for item in result.content)
+            assert "week is required" in text
 
     asyncio.run(exercise())

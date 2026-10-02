@@ -181,7 +181,9 @@ class TestPlayerStats:
         assert game_row["pass_tds"] == 3
         assert game_row["opponent"] == "BUF"
 
-    def test_get_player_stats_with_season_filter(self, client, sample_player, sample_game, sample_stats):
+    def test_get_player_stats_with_season_filter(
+        self, client, sample_player, sample_game, sample_stats
+    ):
         resp = client.get(f"/v1/players/{sample_player.player_id}/stats?season=2025")
         assert resp.status_code == 200
         assert len(resp.json()["games"]) == 1
@@ -271,7 +273,9 @@ class TestPropRecommendations:
         assert len(recs) == 1
         assert recs[0]["sportsbook"] == "FanDuel"
 
-    def test_get_player_props(self, client, sample_player, sample_prediction_with_props):
+    def test_get_player_props(
+        self, client, sample_player, sample_prediction_with_props
+    ):
         resp = client.get(f"/v1/props/recommendations/{sample_player.player_id}")
         assert resp.status_code == 200
         data = resp.json()
@@ -391,8 +395,12 @@ class TestPlayerSearch:
         from nfl_data_aggregator.db.repository import PlayerRepo
 
         repo = PlayerRepo(session)
-        repo.upsert("99991", espn_id="99991", name="Josh Allen", team="BUF", position="QB")
-        repo.upsert("99992", espn_id="99992", name="Josh Jacobs", team="GB", position="RB")
+        repo.upsert(
+            "99991", espn_id="99991", name="Josh Allen", team="BUF", position="QB"
+        )
+        repo.upsert(
+            "99992", espn_id="99992", name="Josh Jacobs", team="GB", position="RB"
+        )
         session.commit()
 
         resp = client.get("/v1/players/search?q=Josh")

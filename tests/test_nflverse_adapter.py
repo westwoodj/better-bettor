@@ -22,30 +22,32 @@ def _make_mock_weekly_df():
     except ImportError:
         pytest.skip("pandas not installed")
 
-    return pd.DataFrame([
-        {
-            "player_id": "00-0033873",
-            "player_name": "P.Mahomes",
-            "player_display_name": "Patrick Mahomes",
-            "recent_team": "KC",
-            "position": "QB",
-            "week": 1,
-            "season": 2025,
-            "completions": 25,
-            "attempts": 35,
-            "passing_yards": 290,
-            "passing_tds": 3,
-            "interceptions": 1,
-            "carries": 4,
-            "rushing_yards": 22,
-            "rushing_tds": 0,
-            "receptions": 0,
-            "targets": 0,
-            "receiving_yards": 0,
-            "receiving_tds": 0,
-            "fantasy_points_ppr": 22.6,
-        }
-    ])
+    return pd.DataFrame(
+        [
+            {
+                "player_id": "00-0033873",
+                "player_name": "P.Mahomes",
+                "player_display_name": "Patrick Mahomes",
+                "recent_team": "KC",
+                "position": "QB",
+                "week": 1,
+                "season": 2025,
+                "completions": 25,
+                "attempts": 35,
+                "passing_yards": 290,
+                "passing_tds": 3,
+                "interceptions": 1,
+                "carries": 4,
+                "rushing_yards": 22,
+                "rushing_tds": 0,
+                "receptions": 0,
+                "targets": 0,
+                "receiving_yards": 0,
+                "receiving_tds": 0,
+                "fantasy_points_ppr": 22.6,
+            }
+        ]
+    )
 
 
 def _make_mock_roster_df():
@@ -54,28 +56,30 @@ def _make_mock_roster_df():
     except ImportError:
         pytest.skip("pandas not installed")
 
-    return pd.DataFrame([
-        {
-            "player_id": "00-0033873",
-            "player_name": "Patrick Mahomes",
-            "team": "KC",
-            "position": "QB",
-            "status": "Active",
-            "height": "6-2",
-            "weight": 225,
-            "years_exp": 7,
-        },
-        {
-            "player_id": "00-0099999",
-            "player_name": "Some Linebacker",
-            "team": "KC",
-            "position": "LB",
-            "status": "Active",
-            "height": "6-3",
-            "weight": 245,
-            "years_exp": 3,
-        },
-    ])
+    return pd.DataFrame(
+        [
+            {
+                "player_id": "00-0033873",
+                "player_name": "Patrick Mahomes",
+                "team": "KC",
+                "position": "QB",
+                "status": "Active",
+                "height": "6-2",
+                "weight": 225,
+                "years_exp": 7,
+            },
+            {
+                "player_id": "00-0099999",
+                "player_name": "Some Linebacker",
+                "team": "KC",
+                "position": "LB",
+                "status": "Active",
+                "height": "6-3",
+                "weight": 245,
+                "years_exp": 3,
+            },
+        ]
+    )
 
 
 def _make_mock_schedule_df():
@@ -84,22 +88,24 @@ def _make_mock_schedule_df():
     except ImportError:
         pytest.skip("pandas not installed")
 
-    return pd.DataFrame([
-        {
-            "game_id": "2025_01_KC_DET",
-            "season": 2025,
-            "week": 1,
-            "game_type": "REG",
-            "home_team": "KC",
-            "away_team": "DET",
-            "gameday": "2025-09-07",
-            "stadium": "Arrowhead Stadium",
-            "home_score": 31,
-            "away_score": 27,
-            "temp": 72,
-            "wind": 8,
-        }
-    ])
+    return pd.DataFrame(
+        [
+            {
+                "game_id": "2025_01_KC_DET",
+                "season": 2025,
+                "week": 1,
+                "game_type": "REG",
+                "home_team": "KC",
+                "away_team": "DET",
+                "gameday": "2025-09-07",
+                "stadium": "Arrowhead Stadium",
+                "home_score": 31,
+                "away_score": 27,
+                "temp": 72,
+                "wind": 8,
+            }
+        ]
+    )
 
 
 def test_import_weekly_data_normalizes():
@@ -107,6 +113,7 @@ def test_import_weekly_data_normalizes():
     mock_df = _make_mock_weekly_df()
 
     import nfl_data_aggregator.adapters.nflverse_adapter as mod
+
     original = mod._nfl_data_py
 
     mock_nfl = MagicMock()
@@ -133,6 +140,7 @@ def test_import_rosters_filters_skill_positions():
     mock_df = _make_mock_roster_df()
 
     import nfl_data_aggregator.adapters.nflverse_adapter as mod
+
     original = mod._nfl_data_py
 
     mock_nfl = MagicMock()
@@ -154,6 +162,7 @@ def test_import_schedule_normalizes():
     mock_df = _make_mock_schedule_df()
 
     import nfl_data_aggregator.adapters.nflverse_adapter as mod
+
     original = mod._nfl_data_py
 
     mock_nfl = MagicMock()

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, datetime
 
 from ..models import PlayerStats, TeamStats
 
@@ -12,7 +12,7 @@ def fetch_team_stats(team_id: str, season: int | None = None) -> TeamStats:
     return TeamStats(
         team_id=team_id,
         team_name=f"Team {team_id}",
-        season=season or date.today().year,
+        season=season or datetime.now(UTC).year,
         wins=8,
         losses=4,
         points_for=320.5,
@@ -30,7 +30,7 @@ def fetch_injured_players(team_id: str) -> list[PlayerStats]:
             player_name="John Doe",
             team_id=team_id,
             position="RB",
-            season=date.today().year,
+            season=datetime.now(UTC).year,
             fantasy_points=45.3,
             snaps_pct=0.0,
         )

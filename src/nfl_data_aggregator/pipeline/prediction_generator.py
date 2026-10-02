@@ -23,16 +23,22 @@ class PredictionSignature(dspy.Signature):
     Do NOT invent statistics. Return predicted_stats as valid JSON.
     """
 
-    player_analysis: str = dspy.InputField(desc="Trend analysis, matchup assessment, key factors, and risk factors from Stage 2")
+    player_analysis: str = dspy.InputField(
+        desc="Trend analysis, matchup assessment, key factors, and risk factors from Stage 2"
+    )
     player_context: str = dspy.InputField(desc="Player profile and recent game stats")
-    historical_baselines: str = dspy.InputField(desc="Season averages and historical performance baselines")
+    historical_baselines: str = dspy.InputField(
+        desc="Season averages and historical performance baselines"
+    )
 
     predicted_stats: str = dspy.OutputField(
         desc='JSON object with stat predictions. Each stat has "floor", "expected", "ceiling" keys. '
-             'Example: {"pass_yards": {"floor": 200, "expected": 265, "ceiling": 330}, '
-             '"pass_tds": {"floor": 1, "expected": 2, "ceiling": 3}}'
+        'Example: {"pass_yards": {"floor": 200, "expected": 265, "ceiling": 330}, '
+        '"pass_tds": {"floor": 1, "expected": 2, "ceiling": 3}}'
     )
-    reasoning: str = dspy.OutputField(desc="Brief explanation of the key drivers behind the predictions (2-3 sentences)")
+    reasoning: str = dspy.OutputField(
+        desc="Brief explanation of the key drivers behind the predictions (2-3 sentences)"
+    )
 
 
 class PredictionGenerator(dspy.Module):
@@ -42,7 +48,9 @@ class PredictionGenerator(dspy.Module):
         super().__init__()
         self.predict = dspy.ChainOfThought(PredictionSignature)
 
-    def forward(self, player_analysis: str, player_context: str, historical_baselines: str):
+    def forward(
+        self, player_analysis: str, player_context: str, historical_baselines: str
+    ):
         return self.predict(
             player_analysis=player_analysis,
             player_context=player_context,

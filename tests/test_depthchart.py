@@ -11,14 +11,16 @@ from nfl_data_aggregator.services.depthchart_service import DepthChartService
 
 def test_parse_sample_depthchart_orders_ranks():
     svc = DepthChartService()
-    fp = os.path.join(ROOT, "tests", "data", "espn", "football", "nfl", "depthcharts", "2-2025.json")
+    fp = os.path.join(
+        ROOT, "tests", "data", "espn", "football", "nfl", "depthcharts", "2-2025.json"
+    )
     result = svc.parse_from_file(fp, force=True)
     # Expect schemas for the sample file
-    assert any("Base" in k or "Base_4-3_D" in k for k in result.keys())
+    assert any("Base" in k or "Base_4-3_D" in k for k in result)
 
     # Pick the Base 4-3 D schema key
     key = None
-    for k in result.keys():
+    for k in result:
         if k.endswith("_2025") and "Base" in k:
             key = k
             break
@@ -33,4 +35,3 @@ def test_parse_sample_depthchart_orders_ranks():
     for _, group in grouped:
         ranks = list(group["rank"].dropna().astype(int).tolist())
         assert ranks == sorted(ranks)
-

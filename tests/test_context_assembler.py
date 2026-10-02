@@ -14,7 +14,14 @@ from nfl_data_aggregator.pipeline.context_assembler import ContextAssembler
 from nfl_data_aggregator.pipeline.context_models import PredictionContext
 
 
-def test_assemble_basic(session, sample_player, sample_game, sample_games_8_weeks, sample_defense_profile, sample_prop_lines):
+def test_assemble_basic(
+    session,
+    sample_player,
+    sample_game,
+    sample_games_8_weeks,
+    sample_defense_profile,
+    sample_prop_lines,
+):
     """Test full context assembly with all fixture data."""
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)
@@ -25,7 +32,9 @@ def test_assemble_basic(session, sample_player, sample_game, sample_games_8_week
     assert ctx.player.position == "QB"
 
 
-def test_assemble_recent_games(session, sample_player, sample_game, sample_games_8_weeks):
+def test_assemble_recent_games(
+    session, sample_player, sample_game, sample_games_8_weeks
+):
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)
 
@@ -35,7 +44,9 @@ def test_assemble_recent_games(session, sample_player, sample_game, sample_games
     assert weeks == sorted(weeks)
 
 
-def test_assemble_season_averages(session, sample_player, sample_game, sample_games_8_weeks):
+def test_assemble_season_averages(
+    session, sample_player, sample_game, sample_games_8_weeks
+):
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)
 
@@ -45,7 +56,9 @@ def test_assemble_season_averages(session, sample_player, sample_game, sample_ga
     assert avgs.avg_pass_tds > 0
 
 
-def test_assemble_matchup(session, sample_player, sample_game, sample_games_8_weeks, sample_defense_profile):
+def test_assemble_matchup(
+    session, sample_player, sample_game, sample_games_8_weeks, sample_defense_profile
+):
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)
 
@@ -55,7 +68,9 @@ def test_assemble_matchup(session, sample_player, sample_game, sample_games_8_we
     assert ctx.matchup.opponent_pass_yards_allowed == 225.5
 
 
-def test_assemble_prop_lines(session, sample_player, sample_game, sample_games_8_weeks, sample_prop_lines):
+def test_assemble_prop_lines(
+    session, sample_player, sample_game, sample_games_8_weeks, sample_prop_lines
+):
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)
 
@@ -76,7 +91,14 @@ def test_assemble_game_not_found(session, sample_player):
         assembler.assemble(sample_player.player_id, "nonexistent")
 
 
-def test_format_methods(session, sample_player, sample_game, sample_games_8_weeks, sample_defense_profile, sample_prop_lines):
+def test_format_methods(
+    session,
+    sample_player,
+    sample_game,
+    sample_games_8_weeks,
+    sample_defense_profile,
+    sample_prop_lines,
+):
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)
 
@@ -89,7 +111,9 @@ def test_format_methods(session, sample_player, sample_game, sample_games_8_week
     assert "pass_yards" in ctx.format_prop_lines()
 
 
-def test_roster_warnings_no_client(session, sample_player, sample_game, sample_games_8_weeks):
+def test_roster_warnings_no_client(
+    session, sample_player, sample_game, sample_games_8_weeks
+):
     """Without ESPN client, roster is not verified but no hard failure."""
     assembler = ContextAssembler(session)
     ctx = assembler.assemble(sample_player.player_id, sample_game.game_id)

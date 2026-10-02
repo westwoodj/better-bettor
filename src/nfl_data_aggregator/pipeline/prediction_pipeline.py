@@ -21,6 +21,7 @@ MAX_RETRIES = 3
 @dataclass
 class PredictionResult:
     """Complete result from the prediction pipeline."""
+
     player_id: str
     game_id: str
     predicted_stats: dict = field(default_factory=dict)
@@ -61,14 +62,18 @@ class PredictionPipeline:
         7. Save to predictions table
         """
         # Stage 1: Context assembly
-        logger.info("Stage 1: Assembling context for player=%s game=%s", player_id, game_id)
+        logger.info(
+            "Stage 1: Assembling context for player=%s game=%s", player_id, game_id
+        )
         context = self.assembler.assemble(player_id, game_id)
 
         if context.roster_warnings:
             for warning in context.roster_warnings:
                 logger.warning("ROSTER WARNING: %s", warning)
         if context.roster_verified:
-            logger.info("Roster verified for %s on %s", context.player.name, context.player.team)
+            logger.info(
+                "Roster verified for %s on %s", context.player.name, context.player.team
+            )
 
         # Stage 2: Data quality confidence
         logger.info("Stage 2: Scoring data quality confidence")
@@ -77,7 +82,9 @@ class PredictionPipeline:
         # Stage 3: Player analysis (DSPy)
         logger.info("Stage 3: Running player analysis")
         analysis_result = self.analyzer(
-            player_context=context.format_player_section() + "\n" + context.format_recent_games(),
+            player_context=context.format_player_section()
+            + "\n"
+            + context.format_recent_games(),
             matchup_context=context.format_matchup_section(),
             game_environment=context.format_environment_section(),
         )
@@ -100,10 +107,14 @@ class PredictionPipeline:
         hallucination_result = None
 
         for attempt in range(1, MAX_RETRIES + 1):
-            logger.info("Stage 4: Prediction generation (attempt %d/%d)", attempt, MAX_RETRIES)
+            logger.info(
+                "Stage 4: Prediction generation (attempt %d/%d)", attempt, MAX_RETRIES
+            )
             pred_result = self.generator(
                 player_analysis=analysis_text,
-                player_context=context.format_player_section() + "\n" + context.format_recent_games(),
+                player_context=context.format_player_section()
+                + "\n"
+                + context.format_recent_games(),
                 historical_baselines=context.format_baselines(),
             )
 
@@ -112,7 +123,9 @@ class PredictionPipeline:
             reasoning = getattr(pred_result, "reasoning", "")
 
             # Stage 5: Hallucination check
-            logger.info("Stage 5: Hallucination check (attempt %d/%d)", attempt, MAX_RETRIES)
+            logger.info(
+                "Stage 5: Hallucination check (attempt %d/%d)", attempt, MAX_RETRIES
+            )
             hallucination_result = self.checker.check_prediction(
                 reasoning_text=reasoning + "\n" + analysis_text,
                 predicted_stats=predicted_stats,
@@ -125,7 +138,8 @@ class PredictionPipeline:
             else:
                 logger.warning(
                     "Hallucination check failed on attempt %d: %d violations",
-                    attempt, len(hallucination_result.violations),
+                    attempt,
+                    len(hallucination_result.violations),
                 )
 
         # Stage 6: Prop line comparison
@@ -162,7 +176,9 @@ class PredictionPipeline:
             prop_comparisons=prop_comparisons,
         )
 
-    def _compare_props(self, predicted_stats: dict, context: PredictionContext) -> list[dict]:
+    def _compare_props(
+        self, predicted_stats: dict, context: PredictionContext
+    ) -> list[dict]:
         """Compare predicted stats against prop lines."""
         comparisons = []
         # Map market names to our stat keys
@@ -193,15 +209,17 @@ class PredictionPipeline:
             edge = expected - prop.line_value
             recommendation = "over" if edge > 0 else "under"
 
-            comparisons.append({
-                "market": prop.market,
-                "line": prop.line_value,
-                "predicted": expected,
-                "floor": pred.get("floor"),
-                "ceiling": pred.get("ceiling"),
-                "edge": round(edge, 1),
-                "recommendation": recommendation,
-                "sportsbook": prop.sportsbook,
-            })
+            comparisons.append(
+                {
+                    "market": prop.market,
+                    "line": prop.line_value,
+                    "predicted": expected,
+                    "floor": pred.get("floor"),
+                    "ceiling": pred.get("ceiling"),
+                    "edge": round(edge, 1),
+                    "recommendation": recommendation,
+                    "sportsbook": prop.sportsbook,
+                }
+            )
 
         return comparisons

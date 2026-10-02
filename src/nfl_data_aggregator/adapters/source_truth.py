@@ -37,10 +37,11 @@ def load_local_dataset(path: str) -> list[dict[str, Any]]:
     return records
 
 
-def find_team_in_source(records: list[dict[str, Any]], team_key: str) -> dict[str, Any] | None:
+def find_team_in_source(
+    records: list[dict[str, Any]], team_key: str
+) -> dict[str, Any] | None:
     """Simple helper to match a team record by team key/name."""
     for r in records:
         if r.get("team_id") == team_key or r.get("team_name") == team_key:
             return r
     return None
-

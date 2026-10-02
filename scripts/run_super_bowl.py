@@ -18,7 +18,9 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(ROOT, ".env"))
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s"
+)
 logger = logging.getLogger("super_bowl")
 
 from sqlalchemy import create_engine
@@ -41,8 +43,8 @@ DB_PATH = os.path.join(ROOT, "gridiron_oracle_superbowl.db")
 DB_URL = f"sqlite:///{DB_PATH}"
 SEASON = 2025
 SUPER_BOWL_GAME_ID = "sb_lx_2026"
-HOME_TEAM = "SEA"   # Seahawks
-AWAY_TEAM = "NE"    # Patriots
+HOME_TEAM = "SEA"  # Seahawks
+AWAY_TEAM = "NE"  # Patriots
 GOOGLE_API_KEY = os.environ.get("GOOGLE_GENAI_API_KEY")
 
 # Key players to predict (name, team, position, ESPN ID)
@@ -55,7 +57,6 @@ KEY_PLAYERS = [
     ("Cooper Kupp", "SEA", "WR", "2977187"),
     ("Rashid Shaheed", "SEA", "WR", "4032473"),
     ("AJ Barner", "SEA", "TE", "4576297"),
-
     # Patriots offense
     ("Drake Maye", "NE", "QB", "4431452"),
     ("Rhamondre Stevenson", "NE", "RB", "4569173"),
@@ -105,14 +106,12 @@ PROP_LINES = [
     ("4431452", "rush_attempts", 6.5, -125, -102, "DraftKings"),
     ("4431452", "completions", 20.5, 102, -130, "DraftKings"),
     ("4431452", "pass_attempts", 30.5, -118, -108, "DraftKings"),
-
     # Rhamondre Stevenson
     ("4569173", "rush_yards", 60.5, -110, -110, "DraftKings"),
     ("4569173", "rush_attempts", 14.5, 109, -139, "DraftKings"),
     ("4569173", "receptions", 3.5, 132, -168, "DraftKings"),
     ("4569173", "receiving_yards", 24.5, -112, -112, "DraftKings"),
     ("4432710", "rush_and_rec_yards", 76.5, -116, -110, "DraftKings"),
-
     # Hunter Henry
     ("3046439", "receiving_yards", 39.5, -109, -115, "DraftKings"),
     ("3046439", "receptions", 3.5, -135, 106, "FanDuel"),
@@ -183,7 +182,7 @@ def _parse_gamelog_stats(names, stat_values):
                 result[db_col] = float(raw)
             else:
                 result[db_col] = int(float(raw))
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             continue
     return result
 
@@ -198,7 +197,7 @@ def fetch_and_seed_season_stats(session, espn_client):
         logger.info("Fetching gamelog for %s (%s)...", name, espn_id)
         try:
             data = espn_client.player_gamelog(espn_id, SEASON, force=True)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.error("Failed to fetch gamelog for %s: %s", name, exc)
             continue
 
@@ -222,7 +221,11 @@ def fetch_and_seed_season_stats(session, espn_client):
                     meta = events_meta.get(event_id, {})
                     week = meta.get("week", 0)
                     opp = meta.get("opponent", {})
-                    opp_abbr = opp.get("abbreviation", "UNK") if isinstance(opp, dict) else "UNK"
+                    opp_abbr = (
+                        opp.get("abbreviation", "UNK")
+                        if isinstance(opp, dict)
+                        else "UNK"
+                    )
                     at_vs = meta.get("atVs", "vs")
 
                     # Determine home/away
@@ -246,7 +249,10 @@ def fetch_and_seed_season_stats(session, espn_client):
                     stats = _parse_gamelog_stats(stat_names, stat_values)
                     if stats:
                         stats_repo.upsert(
-                            espn_id, game_id, source="espn", **stats,
+                            espn_id,
+                            game_id,
+                            source="espn",
+                            **stats,
                         )
                         total_games += 1
 
@@ -347,6 +353,7 @@ def seed_prop_lines(session):
 def configure_dspy():
     """Configure DSPy with Google Gemini."""
     import dspy
+
     lm = dspy.LM(
         model="gemini/gemini-3-pro-preview",
         api_key=GOOGLE_API_KEY,
@@ -373,7 +380,7 @@ def run_predictions(session, espn_client):
         ("Hunter Henry", "3046439"),
         ("Cooper Kupp", "2977187"),
         ("AJ Barner", "4576297"),
-        ("Rashid Shaheed", "4032473")
+        ("Rashid Shaheed", "4032473"),
     ]
 
     for name, espn_id in predict_players:
@@ -383,11 +390,15 @@ def run_predictions(session, espn_client):
             result = pipeline.predict(espn_id, SUPER_BOWL_GAME_ID)
             results.append((name, result))
             logger.info("  Confidence: %.1f", result.confidence_score)
-            logger.info("  Hallucination check: %s",
-                        "PASSED" if result.hallucination_check and result.hallucination_check.passed else "ISSUES")
+            logger.info(
+                "  Hallucination check: %s",
+                "PASSED"
+                if result.hallucination_check and result.hallucination_check.passed
+                else "ISSUES",
+            )
             # Rate limit courtesy -- Gemini free tier
             time.sleep(5)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Failed for %s: %s", name, e)
             results.append((name, None))
             time.sleep(10)
@@ -411,7 +422,17 @@ def print_results(results):
             continue
 
         qual = result.confidence_score
-        grade = "A" if qual >= 80 else "B" if qual >= 65 else "C" if qual >= 50 else "D" if qual >= 35 else "F"
+        grade = (
+            "A"
+            if qual >= 80
+            else "B"
+            if qual >= 65
+            else "C"
+            if qual >= 50
+            else "D"
+            if qual >= 35
+            else "F"
+        )
 
         print(f"  {name}")
         print(f"  Data Quality: {qual:.0f}/100 (Grade {grade})")
@@ -434,7 +455,9 @@ def print_results(results):
                 line = comp["line"]
                 predicted = comp["predicted"]
                 book = comp.get("sportsbook", "")
-                print(f"    {arrow} {market:20s} {line:>6.1f}  (predicted: {predicted}, edge: {edge:+.1f})  [{book}]")
+                print(
+                    f"    {arrow} {market:20s} {line:>6.1f}  (predicted: {predicted}, edge: {edge:+.1f})  [{book}]"
+                )
 
         if result.trend_analysis:
             print(f"\n  Analysis: {result.trend_analysis}")

@@ -14,6 +14,7 @@ import pytest
 
 try:
     import dspy
+
     HAS_DSPY = True
 except ImportError:
     HAS_DSPY = False
@@ -26,28 +27,39 @@ from nfl_data_aggregator.pipeline.prediction_pipeline import (
 
 def _dummy_lm():
     """DummyLM answering the two pipeline stages (player analysis, then prediction)."""
-    predicted_stats_json = json.dumps({
-        "pass_yards": {"floor": 230, "expected": 285, "ceiling": 340},
-        "pass_tds": {"floor": 1, "expected": 2, "ceiling": 3},
-        "rush_yards": {"floor": 10, "expected": 25, "ceiling": 45},
-    })
-    return dspy.utils.DummyLM([
+    predicted_stats_json = json.dumps(
         {
-            "reasoning": "Analyzing recent performance trends and matchup factors.",
-            "trend_analysis": "Mahomes has been consistent with around 283 passing yards per game over the last 8 weeks.",
-            "matchup_assessment": "Buffalo ranks below average against the pass.",
-            "key_factors": "Strong arm, home field advantage, consistent production",
-            "risk_factors": "Strong Buffalo pass rush, cold weather potential",
-        },
-        {
-            "reasoning": "Based on season average of 283 yards and a soft Buffalo pass defense, expecting around 285.",
-            "predicted_stats": predicted_stats_json,
-        },
-    ])
+            "pass_yards": {"floor": 230, "expected": 285, "ceiling": 340},
+            "pass_tds": {"floor": 1, "expected": 2, "ceiling": 3},
+            "rush_yards": {"floor": 10, "expected": 25, "ceiling": 45},
+        }
+    )
+    return dspy.utils.DummyLM(
+        [
+            {
+                "reasoning": "Analyzing recent performance trends and matchup factors.",
+                "trend_analysis": "Mahomes has been consistent with around 283 passing yards per game over the last 8 weeks.",
+                "matchup_assessment": "Buffalo ranks below average against the pass.",
+                "key_factors": "Strong arm, home field advantage, consistent production",
+                "risk_factors": "Strong Buffalo pass rush, cold weather potential",
+            },
+            {
+                "reasoning": "Based on season average of 283 yards and a soft Buffalo pass defense, expecting around 285.",
+                "predicted_stats": predicted_stats_json,
+            },
+        ]
+    )
 
 
 @pytest.mark.skipif(not HAS_DSPY, reason="dspy not installed")
-def test_pipeline_end_to_end(session, sample_player, sample_game, sample_games_8_weeks, sample_defense_profile, sample_prop_lines):
+def test_pipeline_end_to_end(
+    session,
+    sample_player,
+    sample_game,
+    sample_games_8_weeks,
+    sample_defense_profile,
+    sample_prop_lines,
+):
     """Full pipeline with a DummyLM producing structured output."""
 
     dspy.configure(lm=_dummy_lm())
@@ -63,7 +75,14 @@ def test_pipeline_end_to_end(session, sample_player, sample_game, sample_games_8
 
 
 @pytest.mark.skipif(not HAS_DSPY, reason="dspy not installed")
-def test_pipeline_prop_comparison(session, sample_player, sample_game, sample_games_8_weeks, sample_defense_profile, sample_prop_lines):
+def test_pipeline_prop_comparison(
+    session,
+    sample_player,
+    sample_game,
+    sample_games_8_weeks,
+    sample_defense_profile,
+    sample_prop_lines,
+):
     """Verify prop comparisons are generated."""
 
     dspy.configure(lm=_dummy_lm())
