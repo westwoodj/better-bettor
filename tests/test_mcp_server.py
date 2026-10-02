@@ -34,6 +34,9 @@ def test_mcp_stdio_lists_tools_and_returns_concise_validation_error(tmp_path):
                     "list_games",
                     "get_game_context",
                     "get_roster",
+                    "list_odds_events",
+                    "get_betting_lines",
+                    "get_betting_line_history",
                 }
                 cache_tool = next(tool for tool in listing.tools if tool.name == "get_cache_status")
                 assert "record_counts" in cache_tool.outputSchema["properties"]

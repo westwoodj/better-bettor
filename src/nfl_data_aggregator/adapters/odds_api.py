@@ -1,222 +1,188 @@
-from typing import List, Optional
-import logging
-from datetime import datetime, timezone
-from ..models import Odds
+"""HTTP client and market definitions for The Odds API v4."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Iterable
+
+import requests
+
 from ..config.config import settings
 
-logger = logging.getLogger(__name__)
-
-# The Odds API base URL (v4)
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
 
-
-def _default_mock(matchup_id: str) -> List[Odds]:
-    now = datetime.now(timezone.utc).isoformat()
-    return [
-        Odds(
-            provider="MockOdds",
-            spread=-3.5,
-            spread_favorite="Home",
-            moneyline_home=-180.0,
-            moneyline_away=150.0,
-            total=44.5,
-            last_updated=now,
-        )
-    ]
-
-
-def _preferred_markets() -> List[str]:
-    # Request a set of markets that cover spreads, totals, team totals and
-    # player props. The Odds API exposes player props under player_props.
-    return [
-        "spreads",
-        "totals",
-        "team_totals",
-        "alternate_spreads",
-        "alternate_totals",
-        "alternate_team_totals",
-        "player_props",
-        "h2h",
-    ]
-
-
-def _safe_get_first_event(data: list, matchup_id: str) -> Optional[dict]:
-    if not isinstance(data, list) or len(data) == 0:
-        return None
-    # Try to find by explicit id first
-    for ev in data:
-        if ev.get("id") == matchup_id:
-            return ev
-    # fallback: return the first event
-    return data[0]
+CORE_MARKETS = ("h2h", "spreads", "totals")
+NFL_DEFAULT_MARKETS = CORE_MARKETS + (
+    "team_totals",
+    "player_pass_attempts",
+    "player_pass_completions",
+    "player_pass_interceptions",
+    "player_pass_longest_completion",
+    "player_pass_rush_yds",
+    "player_pass_rush_reception_tds",
+    "player_pass_rush_reception_yds",
+    "player_pass_tds",
+    "player_pass_yds",
+    "player_pass_yds_q1",
+    "player_receptions",
+    "player_reception_longest",
+    "player_reception_tds",
+    "player_reception_yds",
+    "player_rush_attempts",
+    "player_rush_longest",
+    "player_rush_reception_tds",
+    "player_rush_reception_yds",
+    "player_rush_tds",
+    "player_rush_yds",
+    "player_tds_over",
+    "player_tds",
+    "player_1st_td",
+    "player_anytime_td",
+    "player_last_td",
+)
 
 
-def fetch_current_odds(matchup_id: str, sport_key: str = "americanfootball_nfl", regions: str = "us") -> List[Odds]:
-    """Fetch current odds for a matchup from The Odds API.
+class OddsAPIError(RuntimeError):
+    """An actionable failure returned by or while calling The Odds API."""
 
-    - If `settings.ODDS_API_KEY` is not set, this function returns a mocked list
-      (keeps behavior friendly for development).
-    - This function requests a conservative set of markets that includes
-      player props (`player_props`) which will include player_pass*, player_rush*,
-      player_reception*, player_anytime_td, player_sacks, player_solo_tackles,
-      player_tackles_assists where available from the provider.
+    def __init__(self, message: str, *, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
 
-    Parameters
-    - matchup_id: The event id you expect from The Odds API (if you have it).
-                 If None or not matched, the first returned event will be used.
-    - sport_key: The Odds API sport key (defaults to NFL key).
-    - regions: Comma-separated region param for the Odds API (defaults to "us").
 
-    Returns a list of `Odds` model instances (one per bookmaker/provider).
-    """
-    api_key = getattr(settings, "ODDS_API_KEY", None)
-    if not api_key:
-        logger.debug("No ODDS_API_KEY configured; returning mock odds for %s", matchup_id)
-        return _default_mock(matchup_id)
+@dataclass(frozen=True)
+class OddsAPIResponse:
+    data: Any
+    quota: dict[str, int | None] = field(default_factory=dict)
 
-    try:
-        import requests
-    except Exception:
-        logger.exception("requests library is required for The Odds API adapter")
-        return _default_mock(matchup_id)
 
-    markets = ",".join(_preferred_markets())
-    params = {
-        "apiKey": api_key,
-        "regions": regions,
-        "markets": markets,
-        "oddsFormat": "american",
+def default_markets(sport_key: str) -> list[str]:
+    """Return the bounded default market bundle for a sport."""
+    if sport_key == "americanfootball_nfl":
+        return list(NFL_DEFAULT_MARKETS)
+    return list(CORE_MARKETS)
+
+
+def normalize_values(values: Iterable[str] | str | None) -> list[str]:
+    """Normalize comma-separated or iterable request values."""
+    if values is None:
+        return []
+    if isinstance(values, str):
+        values = values.split(",")
+    return sorted({str(value).strip().lower() for value in values if str(value).strip()})
+
+
+class OddsAPIClient:
+    """Small injectable synchronous client for The Odds API v4."""
+
+    def __init__(
+        self,
+        api_key: str | None = None,
+        *,
+        session: Any | None = None,
+        base_url: str = ODDS_API_BASE,
+        timeout: float = 10.0,
+    ):
+        self.api_key = api_key if api_key is not None else settings.ODDS_API_KEY
+        self.session = session or requests.Session()
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+
+    def list_events(
+        self,
+        sport_key: str,
+        *,
+        commence_time_from: str | None = None,
+        commence_time_to: str | None = None,
+        event_ids: Iterable[str] | str | None = None,
+    ) -> OddsAPIResponse:
+        params: dict[str, Any] = {"dateFormat": "iso"}
+        if commence_time_from:
+            params["commenceTimeFrom"] = commence_time_from
+        if commence_time_to:
+            params["commenceTimeTo"] = commence_time_to
+        if isinstance(event_ids, str):
+            event_ids = event_ids.split(",")
+        ids = sorted({str(value).strip() for value in (event_ids or []) if str(value).strip()})
+        if ids:
+            params["eventIds"] = ",".join(ids)
+        return self._get(f"/sports/{sport_key}/events", params)
+
+    def get_event_odds(
+        self,
+        sport_key: str,
+        event_id: str,
+        *,
+        markets: Iterable[str] | str,
+        regions: Iterable[str] | str | None = None,
+        bookmakers: Iterable[str] | str | None = None,
+    ) -> OddsAPIResponse:
+        region_values = normalize_values(regions)
+        bookmaker_values = normalize_values(bookmakers)
+        if region_values and bookmaker_values:
+            raise OddsAPIError("regions and bookmakers are mutually exclusive")
+        market_values = normalize_values(markets)
+        if not market_values:
+            raise OddsAPIError("at least one market key is required")
+
+        params: dict[str, Any] = {
+            "markets": ",".join(market_values),
+            "oddsFormat": "american",
+            "dateFormat": "iso",
+        }
+        if bookmaker_values:
+            params["bookmakers"] = ",".join(bookmaker_values)
+        else:
+            params["regions"] = ",".join(region_values or normalize_values(settings.ODDS_API_REGIONS))
+        return self._get(f"/sports/{sport_key}/events/{event_id}/odds", params)
+
+    def _get(self, path: str, params: dict[str, Any]) -> OddsAPIResponse:
+        if not self.api_key:
+            raise OddsAPIError("ODDS_API_KEY is not configured")
+        request_params = dict(params)
+        request_params["apiKey"] = self.api_key
+        try:
+            response = self.session.get(
+                f"{self.base_url}{path}", params=request_params, timeout=self.timeout
+            )
+        except requests.RequestException as exc:
+            raise OddsAPIError(f"The Odds API request failed: {exc}") from exc
+        except Exception as exc:
+            raise OddsAPIError(f"The Odds API request failed: {exc}") from exc
+
+        if response.status_code != 200:
+            detail = _response_detail(response)
+            raise OddsAPIError(
+                f"The Odds API returned HTTP {response.status_code}: {detail}",
+                status_code=response.status_code,
+            )
+        try:
+            data = response.json()
+        except Exception as exc:
+            raise OddsAPIError("The Odds API returned invalid JSON") from exc
+        return OddsAPIResponse(data=data, quota=_quota_headers(response.headers))
+
+
+def _quota_headers(headers: Any) -> dict[str, int | None]:
+    return {
+        "remaining": _optional_int(headers.get("x-requests-remaining")),
+        "used": _optional_int(headers.get("x-requests-used")),
+        "last": _optional_int(headers.get("x-requests-last")),
     }
 
-    url = f"{ODDS_API_BASE}/sports/{sport_key}/odds"
 
+def _optional_int(value: Any) -> int | None:
     try:
-        resp = requests.get(url, params=params, timeout=10)
-        if resp.status_code != 200:
-            logger.warning("The Odds API returned %s: %s", resp.status_code, resp.text)
-            return _default_mock(matchup_id)
-        data = resp.json()
-    except Exception as exc:
-        logger.exception("Error calling The Odds API: %s", exc)
-        return _default_mock(matchup_id)
-
-    event = _safe_get_first_event(data, matchup_id)
-    if not event:
-        logger.debug("No event found in The Odds API response for matchup_id=%s", matchup_id)
-        return []
-
-    home = event.get("home_team")
-    away = event.get("away_team")
-    last_updated = event.get("commence_time") or datetime.now(timezone.utc).isoformat()
-
-    odds_list: List[Odds] = []
-    for bookmaker in event.get("bookmakers", []):
-        provider = bookmaker.get("title") or bookmaker.get("key")
-        spread = None
-        spread_favorite = None
-        moneyline_home = None
-        moneyline_away = None
-        total = None
-        player_props = []
-
-        for market in bookmaker.get("markets", []):
-            key = market.get("key", "")
-            outcomes = market.get("outcomes", []) or []
-
-            # Spreads
-            if "spread" in key:
-                for o in outcomes:
-                    point = o.get("point")
-                    if point is None:
-                        continue
-                    # Negative point typically indicates the favorite
-                    if point < 0:
-                        spread = abs(point)
-                        spread_favorite = o.get("name")
-                        break
-
-            # Moneyline / h2h
-            if key in ("h2h", "moneyline"):
-                for o in outcomes:
-                    name = o.get("name")
-                    price = o.get("price")
-                    if name == home:
-                        moneyline_home = price
-                    elif name == away:
-                        moneyline_away = price
-
-            # Totals
-            if "total" in key or "totals" in key:
-                # Try to find an Over outcome and take its point as the total
-                for o in outcomes:
-                    if o.get("name", "").lower().startswith("over"):
-                        total = o.get("point")
-                        break
-
-            # Player props: match keys that start with the allowed prefixes
-            player_prefixes = [
-                "player_pass",
-                "player_rush",
-                "player_reception",
-                "player_anytime_td",
-                "player_sacks",
-                "player_solo_tackles",
-                "player_tackles_assists",
-            ]
-            # also accept generic 'player_props' market
-            # Exclude specific undesired markets explicitly
-            excluded_patterns = ("player_rush_reception_tds", "player_reception_tds")
-            if key == "player_props" or (
-                any(key.startswith(p) for p in player_prefixes)
-                and not any(pat in key for pat in excluded_patterns)
-                and not key.endswith("_tds")
-            ):
-                for o in outcomes:
-                    # o may contain participant/player name under various fields
-                    player_name = o.get("participant") or o.get("player") or o.get("name")
-                    # Try to split name like 'Over 22.5 - Player X' or similar
-                    if isinstance(player_name, str) and " - " in player_name:
-                        parts = player_name.split(" - ")
-                        # heuristic: last part likely player
-                        player_name = parts[-1]
-
-                    line = o.get("point")
-                    direction = None
-                    nm = o.get("name", "")
-                    if isinstance(nm, str):
-                        nm_low = nm.lower()
-                        if nm_low.startswith("over"):
-                            direction = "over"
-                        elif nm_low.startswith("under"):
-                            direction = "under"
-
-                    price = o.get("price")
-
-                    prop = {
-                        "market_key": key,
-                        "player_name": player_name,
-                        "line": line,
-                        "direction": direction,
-                        "price": price,
-                        "raw_name": o.get("name"),
-                    }
-                    player_props.append(prop)
-
-        odds_obj = Odds(
-            provider=provider,
-            spread=spread,
-            spread_favorite=spread_favorite,
-            moneyline_home=moneyline_home,
-            moneyline_away=moneyline_away,
-            total=total,
-            last_updated=last_updated,
-            player_props=player_props if player_props else None,
-        )
-        odds_list.append(odds_obj)
-
-    return odds_list
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
 
 
-# For backward compatibility expose the same function name previously used
-# by the scaffold (it previously returned a mock list). If you prefer to
-# separate the real and mock flows, you can add a new function name.
+def _response_detail(response: Any) -> str:
+    try:
+        payload = response.json()
+        if isinstance(payload, dict):
+            return str(payload.get("message") or payload.get("error") or payload)[:300]
+    except Exception:
+        pass
+    return str(getattr(response, "text", "upstream error"))[:300]

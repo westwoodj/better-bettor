@@ -9,10 +9,20 @@ from sqlalchemy.orm import Session
 from ..adapters.espn_api import NFLClient
 from ..adapters.espn_stats_adapter import SKILL_POSITIONS
 from ..db.repository import DefenseProfileRepo, GameRepo, PlayerRepo
-from ..db.sa_models import DefenseProfile, Game, Player, PlayerGameStats
+from ..db.sa_models import (
+    DefenseProfile,
+    Game,
+    OddsEvent,
+    OddsLine,
+    OddsSnapshot,
+    Player,
+    PlayerGameStats,
+)
 from ..ingestion.espn_ingestor import ESPNIngestor
 from ..mcp.schemas import (
     CacheStatusResult,
+    BettingLineHistoryResult,
+    BettingLinesResult,
     DefenseRecord,
     GameContextResult,
     GameRecord,
@@ -23,7 +33,9 @@ from ..mcp.schemas import (
     PlayerSearchResult,
     RefreshMetadata,
     RosterResult,
+    OddsEventsResult,
 )
+from .odds_query_service import OddsQueryError, OddsQueryService
 
 
 class DataQueryError(ValueError):
@@ -33,9 +45,12 @@ class DataQueryError(ValueError):
 class DataQueryService:
     """Query persisted NFL data and explicitly refresh bounded ESPN resources."""
 
-    def __init__(self, session: Session, espn_client: NFLClient | None = None):
+    def __init__(self, session: Session, espn_client: NFLClient | None = None, odds_client=None):
         self.session = session
         self.client = espn_client or NFLClient()
+        self.odds = OddsQueryService(
+            session, odds_client, espn_client=self.client
+        )
 
     def get_cache_status(self) -> CacheStatusResult:
         models = {
@@ -43,6 +58,9 @@ class DataQueryService:
             "games": Game,
             "player_game_stats": PlayerGameStats,
             "defense_profiles": DefenseProfile,
+            "odds_events": OddsEvent,
+            "odds_snapshots": OddsSnapshot,
+            "odds_lines": OddsLine,
         }
         counts = {
             name: int(self.session.scalar(select(func.count()).select_from(model)) or 0)
@@ -68,8 +86,80 @@ class DataQueryService:
                 "rosters": counts["players"] > 0,
                 "game_context": counts["games"] > 0,
                 "defense_profiles": counts["defense_profiles"] > 0,
+                "betting_lines": counts["odds_lines"] > 0,
             },
+            newest_odds_snapshot=_iso(
+                self.session.scalar(select(func.max(OddsSnapshot.fetched_at)))
+            ),
         )
+
+    def list_odds_events(
+        self,
+        sport_key: str = "americanfootball_nfl",
+        *,
+        commence_time_from: str | None = None,
+        commence_time_to: str | None = None,
+        limit: int = 100,
+        force: bool = False,
+    ) -> OddsEventsResult:
+        try:
+            return self.odds.list_events(
+                sport_key,
+                commence_time_from=commence_time_from,
+                commence_time_to=commence_time_to,
+                limit=limit,
+                force=force,
+            )
+        except OddsQueryError as exc:
+            raise DataQueryError(str(exc)) from exc
+
+    def get_betting_lines(
+        self,
+        sport_key: str,
+        event_id: str,
+        *,
+        market_keys: list[str] | None = None,
+        regions: list[str] | None = None,
+        bookmakers: list[str] | None = None,
+        force: bool = False,
+    ) -> BettingLinesResult:
+        try:
+            return self.odds.get_betting_lines(
+                sport_key,
+                event_id,
+                market_keys=market_keys,
+                regions=regions,
+                bookmakers=bookmakers,
+                force=force,
+            )
+        except OddsQueryError as exc:
+            raise DataQueryError(str(exc)) from exc
+
+    def get_betting_line_history(
+        self,
+        sport_key: str,
+        event_id: str,
+        *,
+        market_keys: list[str] | None = None,
+        bookmaker_keys: list[str] | None = None,
+        participant: str | None = None,
+        fetched_from: str | None = None,
+        fetched_to: str | None = None,
+        snapshot_limit: int = 20,
+    ) -> BettingLineHistoryResult:
+        try:
+            return self.odds.get_betting_line_history(
+                sport_key,
+                event_id,
+                market_keys=market_keys,
+                bookmaker_keys=bookmaker_keys,
+                participant=participant,
+                fetched_from=fetched_from,
+                fetched_to=fetched_to,
+                snapshot_limit=snapshot_limit,
+            )
+        except OddsQueryError as exc:
+            raise DataQueryError(str(exc)) from exc
 
     def search_players(
         self,

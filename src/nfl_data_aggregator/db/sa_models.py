@@ -9,7 +9,7 @@ from typing import Optional
 
 from sqlalchemy import (
     String, Integer, Float, Boolean, Text, DateTime, JSON,
-    ForeignKey, UniqueConstraint,
+    ForeignKey, Index, UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -35,6 +35,7 @@ class Player(Base):
     game_stats: Mapped[list["PlayerGameStats"]] = relationship(back_populates="player")
     prop_lines: Mapped[list["PropLine"]] = relationship(back_populates="player")
     predictions: Mapped[list["Prediction"]] = relationship(back_populates="player")
+    odds_lines: Mapped[list["OddsLine"]] = relationship(back_populates="player")
 
 
 class Game(Base):
@@ -55,6 +56,94 @@ class Game(Base):
     game_stats: Mapped[list["PlayerGameStats"]] = relationship(back_populates="game")
     prop_lines: Mapped[list["PropLine"]] = relationship(back_populates="game")
     predictions: Mapped[list["Prediction"]] = relationship(back_populates="game")
+    odds_event: Mapped[Optional["OddsEvent"]] = relationship(back_populates="game", uselist=False)
+
+
+class OddsEvent(Base):
+    __tablename__ = "odds_events"
+
+    event_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    sport_key: Mapped[str] = mapped_column(String(64), index=True)
+    sport_title: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    commence_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    home_team: Mapped[str] = mapped_column(String(128))
+    away_team: Mapped[str] = mapped_column(String(128))
+    game_id: Mapped[Optional[str]] = mapped_column(
+        String(32), ForeignKey("games.game_id"), unique=True, nullable=True
+    )
+    discovered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+
+    game: Mapped[Optional["Game"]] = relationship(back_populates="odds_event")
+    snapshots: Mapped[list["OddsSnapshot"]] = relationship(
+        back_populates="event", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_odds_events_sport_commence", "sport_key", "commence_time"),
+    )
+
+
+class OddsSnapshot(Base):
+    __tablename__ = "odds_snapshots"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    event_id: Mapped[str] = mapped_column(String(64), ForeignKey("odds_events.event_id"))
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    request_signature: Mapped[str] = mapped_column(String(64))
+    requested_markets: Mapped[list] = mapped_column(JSON)
+    regions: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    bookmakers: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    odds_format: Mapped[str] = mapped_column(String(16), default="american")
+    outcome_count: Mapped[int] = mapped_column(Integer, default=0)
+    requests_remaining: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    requests_used: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    requests_last: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    event: Mapped["OddsEvent"] = relationship(back_populates="snapshots")
+    lines: Mapped[list["OddsLine"]] = relationship(
+        back_populates="snapshot", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index("ix_odds_snapshots_event_fetched", "event_id", "fetched_at"),
+        Index(
+            "ix_odds_snapshots_event_signature_fetched",
+            "event_id",
+            "request_signature",
+            "fetched_at",
+        ),
+    )
+
+
+class OddsLine(Base):
+    __tablename__ = "odds_lines"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    snapshot_id: Mapped[int] = mapped_column(Integer, ForeignKey("odds_snapshots.id"))
+    bookmaker_key: Mapped[str] = mapped_column(String(64))
+    bookmaker_title: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    market_key: Mapped[str] = mapped_column(String(96))
+    market_last_update: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    outcome_name: Mapped[str] = mapped_column(String(128))
+    participant: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)
+    price: Mapped[float] = mapped_column(Float)
+    point: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    player_id: Mapped[Optional[str]] = mapped_column(
+        String(32), ForeignKey("players.player_id"), nullable=True
+    )
+    extra_data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    snapshot: Mapped["OddsSnapshot"] = relationship(back_populates="lines")
+    player: Mapped[Optional["Player"]] = relationship(back_populates="odds_lines")
+
+    __table_args__ = (
+        Index("ix_odds_lines_snapshot_market", "snapshot_id", "market_key"),
+        Index("ix_odds_lines_bookmaker", "bookmaker_key"),
+        Index("ix_odds_lines_participant", "participant"),
+    )
 
 
 class PlayerGameStats(Base):

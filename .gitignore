@@ -31,3 +31,6 @@ Desktop.ini
 
 # uv virtualenv
 .venv/
+
+# Ignore local data files
+src/data/espn/football/*

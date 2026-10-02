@@ -37,5 +37,9 @@ def test_alembic_adds_venue_location_to_existing_sqlite_database(tmp_path):
 
     connection = sqlite3.connect(database)
     columns = {row[1] for row in connection.execute("PRAGMA table_info(games)")}
+    tables = {row[0] for row in connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    )}
     connection.close()
     assert "venue_location" in columns
+    assert {"odds_events", "odds_snapshots", "odds_lines"}.issubset(tables)
