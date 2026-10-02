@@ -14,34 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.14
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
+          enable-cache: true
           python-version: '3.14'
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.cache/pip/wheels
-          key: v1-pip-cache-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
-          restore-keys: v1-pip-cache-${{ runner.os }}-
-
-      - name: Install pipenv and upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-          pip install pipenv
-
-      - name: Install dependencies from Pipfile.lock (deterministic)
-        run: |
-          pipenv install --deploy --system
+      - name: Install dependencies from uv.lock (deterministic)
+        run: uv sync --locked
 
       - name: Run tests
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python -m pytest -q
+          uv run pytest -q
   test:
     runs-on: ubuntu-latest
     env:
@@ -52,56 +38,27 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.14
-        uses: actions/setup-python@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
+          enable-cache: true
           python-version: '3.14'
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.cache/pip/wheels
-          key: v1-pip-cache-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
-          restore-keys: v1-pip-cache-${{ runner.os }}-
-
-      - name: Cache pipenv virtualenvs and cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.local/share/virtualenvs
-            ~/.cache/pipenv
-          key: v1-pipenv-cache-${{ runner.os }}-${{ hashFiles('Pipfile.lock') }}
-          restore-keys: v1-pipenv-cache-${{ runner.os }}-
-
-      - name: Install pipenv and upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-          pip install pipenv
-
-      - name: Install dependencies from Pipfile.lock (deterministic)
-        run: |
-          # Will fail if Pipfile.lock is out of date or dependency resolution differs
-          pipenv install --deploy --system
-
-      - name: Install test/dev tooling
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest requests ruff coverage codecov
+      - name: Install dependencies from uv.lock (deterministic)
+        run: uv sync --locked
 
       - name: Lint with ruff
         if: env.SKIP_RUFF != 'true'
         run: |
           # Fail CI on lint errors
-          ruff check .
+          uv run ruff check .
 
       - name: Run tests under coverage and produce xml
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          coverage run -m pytest -q
-          coverage xml -i
+          uv run coverage run -m pytest -q
+          uv run coverage xml -i
 
       - name: Upload coverage to Codecov
         if: secrets.CODECOV_TOKEN != ''
@@ -116,4 +73,4 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest -q
+          uv run pytest -q

@@ -9,7 +9,7 @@ Gridiron Oracle combines DSPy structured reasoning with rigorous hallucination p
 ### Prerequisites
 
 - Python 3.14+
-- [pipenv](https://pipenv.pypa.io/)
+- [uv](https://docs.astral.sh/uv/)
 - An Anthropic or OpenAI API key (for the DSPy prediction pipeline)
 
 ### Installation
@@ -17,13 +17,13 @@ Gridiron Oracle combines DSPy structured reasoning with rigorous hallucination p
 ```bash
 git clone <repo-url>
 cd better-bettor
-pipenv install
+uv sync
 ```
 
 Apply database migrations before starting an API or MCP process:
 
 ```bash
-PYTHONPATH=src pipenv run alembic upgrade head
+PYTHONPATH=src uv run alembic upgrade head
 ```
 
 ### Environment Setup
@@ -41,7 +41,7 @@ Edit `.env` with your configuration (see [Configuration](#configuration) below).
 Start the FastAPI server:
 
 ```bash
-pipenv run python -m nfl_data_aggregator.api.server
+uv run python -m nfl_data_aggregator.api.server
 ```
 
 The server starts on `http://localhost:8000` by default. Interactive API docs (Swagger UI) are available at:
@@ -53,7 +53,7 @@ http://localhost:8000/docs
 ### Custom Host/Port
 
 ```bash
-API_HOST=127.0.0.1 API_PORT=9000 pipenv run python -m nfl_data_aggregator.api.server
+API_HOST=127.0.0.1 API_PORT=9000 uv run python -m nfl_data_aggregator.api.server
 ```
 
 ## API Endpoints
@@ -135,7 +135,7 @@ curl "http://localhost:8000/v1/props/recommendations?min_edge=3.0&sportsbook=Dra
 You can run predictions without the API server using the CLI script:
 
 ```bash
-pipenv run python scripts/run_super_bowl.py
+uv run python scripts/run_super_bowl.py
 ```
 
 This script ingests data from ESPN, runs the prediction pipeline for key players, and stores results in the SQLite database. After running it, the API endpoints for stats, context, and prop recommendations will return populated data.
@@ -148,7 +148,7 @@ their configured cache TTL and may automatically fetch an expired or missing
 snapshot; successful refreshes are written before the tool returns.
 
 ```bash
-PYTHONPATH=src pipenv run python -m nfl_data_aggregator.mcp.server
+PYTHONPATH=src uv run python -m nfl_data_aggregator.mcp.server
 ```
 
 Example client configuration (replace the working directory with your clone):
@@ -157,7 +157,7 @@ Example client configuration (replace the working directory with your clone):
 {
   "mcpServers": {
     "gridiron-oracle": {
-      "command": "pipenv",
+      "command": "uv",
       "args": ["run", "python", "-m", "nfl_data_aggregator.mcp.server"],
       "cwd": "/absolute/path/to/better-bettor",
       "env": {"PYTHONPATH": "/absolute/path/to/better-bettor/src"}
@@ -226,13 +226,13 @@ All configuration is via environment variables (or a `.env` file):
 ## Running Tests
 
 ```bash
-pipenv run python -m pytest tests/
+uv run python -m pytest tests/
 ```
 
 With coverage:
 
 ```bash
-pipenv run python -m pytest tests/ --cov=nfl_data_aggregator
+uv run python -m pytest tests/ --cov=nfl_data_aggregator
 ```
 
 ## Architecture

@@ -27,6 +27,7 @@ def test_mcp_stdio_lists_tools_and_returns_concise_validation_error(tmp_path):
                 listing = await session.list_tools()
                 names = {tool.name for tool in listing.tools}
                 assert names == {
+                    "health",
                     "get_cache_status",
                     "search_players",
                     "get_player_performances",
@@ -39,6 +40,10 @@ def test_mcp_stdio_lists_tools_and_returns_concise_validation_error(tmp_path):
                 }
                 cache_tool = next(tool for tool in listing.tools if tool.name == "get_cache_status")
                 assert "record_counts" in cache_tool.outputSchema["properties"]
+                health = await session.call_tool("health", {})
+                assert health.isError is False
+                assert health.structuredContent["status"] == "ok"
+                assert health.structuredContent["database"] == "ok"
                 result = await session.call_tool(
                     "list_games", {"season": 2026, "force": True}
                 )
